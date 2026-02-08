@@ -212,10 +212,19 @@ if df is not None:
     # --- REGIONALE ANALYSE (KARTE) ---
     st.divider()
     st.header("Regionale Analyse")
-    st.caption("Die Karte zeigt immer den gesamtdeutschen Bestand (unabhängig von Bundesland-Filtern) auf Kreisebene.")
+    st.caption("Die Karte zeigt den gesamtdeutschen Bestand auf Kreisebene (alle Filter außer Bundesland werden angewendet).")
 
     if gdf_districts is not None:
-        df_for_map = df.copy()
+        df_for_map = df[
+            (df['Jahr'] >= selected_jahre[0]) &
+            (df['Jahr'] <= selected_jahre[1]) &
+            (df['Leistungskategorie'].isin(selected_leistungstypen)) &
+            (df['LadeUseCase'].isin(selected_use_cases))
+        ]
+        if search_kreis:
+            df_for_map = df_for_map[df_for_map['KreisKreisfreieStadt'].str.lower().str.contains(search_kreis, na=False)]
+        if search_betreiber:
+            df_for_map = df_for_map[df_for_map['BetreiberBereinigt'].str.lower().str.contains(search_betreiber, na=False)]
         df_for_map['AGS'] = df_for_map['ARS'].astype(str).str.zfill(12).str[:5]
 
         # Gesamtzahl pro Kreis
