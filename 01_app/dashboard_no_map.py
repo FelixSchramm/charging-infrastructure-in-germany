@@ -45,6 +45,8 @@ def load_geodata():
         project_root = Path(__file__).parent.parent
         shapefile_path = project_root / "02_data/02_meta_data/vg250_01-01.gk3.shape.ebenen/vg250_ebenen_0101/VG250_KRS.shp"
         gdf = gpd.read_file(shapefile_path)
+        gdf['geometry'] = gdf['geometry'].simplify(tolerance=500, preserve_topology=True)
+        gdf = gdf.to_crs(epsg=4326)
         for col in gdf.columns:
             if pd.api.types.is_datetime64_any_dtype(gdf[col]):
                 gdf[col] = gdf[col].astype(str)
@@ -210,38 +212,49 @@ if df is not None:
     # --- REGIONALE ANALYSE (KARTE) ---
     st.divider()
     st.header("Regionale Analyse")
+    st.caption("Die Karte zeigt immer den gesamtdeutschen Bestand (unabhängig von Bundesland-Filtern) auf Kreisebene.")
 
-    if gdf_districts is not None and not df_filtered.empty:
-        df_for_map = df_filtered.copy()
+    if gdf_districts is not None:
+        df_for_map = df.copy()
         df_for_map['AGS'] = df_for_map['ARS'].astype(str).str.zfill(12).str[:5]
 
-        charging_per_district = df_for_map.groupby('AGS')['ladepunkt_id'].count().reset_index()
-        charging_per_district.columns = ['AGS', 'num_charging_points']
+        # Gesamtzahl pro Kreis
+        total_per_district = df_for_map.groupby('AGS')['ladepunkt_id'].count().reset_index()
+        total_per_district.columns = ['AGS', 'Gesamt']
 
-        merged_gdf = gdf_districts.merge(charging_per_district, on='AGS', how='left')
-        merged_gdf['num_charging_points'] = merged_gdf['num_charging_points'].fillna(0).astype(int)
-        gdf_for_map = merged_gdf[['AGS', 'GEN', 'geometry', 'num_charging_points']].copy()
+        # Aufschlüsselung nach Leistungskategorie
+        kat_per_district = df_for_map.groupby(['AGS', 'Leistungskategorie']).size().unstack(fill_value=0).reset_index()
+        for col_name in ['HPC-Laden (>= 150 kW)', 'Schnellladen (> 22 kW)', 'Normalladen (<= 22 kW)']:
+            if col_name not in kat_per_district.columns:
+                kat_per_district[col_name] = 0
+        kat_per_district = kat_per_district.rename(columns={
+            'HPC-Laden (>= 150 kW)': 'HPC',
+            'Schnellladen (> 22 kW)': 'Schnellladen',
+            'Normalladen (<= 22 kW)': 'Normalladen'
+        })
 
-        m = folium.Map(location=[51.16, 10.45], tiles="CartoDB positron", zoom_start=6, min_zoom=5)
+        district_data = total_per_district.merge(kat_per_district[['AGS', 'HPC', 'Schnellladen', 'Normalladen']], on='AGS', how='left')
 
-        non_zero = gdf_for_map[gdf_for_map['num_charging_points'] > 0]['num_charging_points']
-        if not non_zero.empty and non_zero.nunique() > 1:
-            bins = list(non_zero.quantile([0, 0.2, 0.4, 0.6, 0.8, 1.0]).unique())
-            if bins[0] > 0:
-                bins.insert(0, 0)
-        else:
-            max_val = gdf_for_map['num_charging_points'].max()
-            bins = [0, max(max_val / 2, 1), max(max_val, 2)]
+        merged_gdf = gdf_districts.merge(district_data, on='AGS', how='left')
+        for col_name in ['Gesamt', 'HPC', 'Schnellladen', 'Normalladen']:
+            merged_gdf[col_name] = merged_gdf[col_name].fillna(0).astype(int)
+        gdf_for_map = merged_gdf[['AGS', 'GEN', 'geometry', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen']].copy()
+
+        m = folium.Map(location=[51.16, 10.45], tiles="CartoDB positron", zoom_start=6, min_zoom=6, max_bounds=True)
+        m.fit_bounds([[47.27, 5.87], [55.06, 15.04]])
+
+        max_val = int(gdf_for_map['Gesamt'].max())
+        bins = [0, 100, 500, 1000, 2500, max_val + 1]
 
         folium.Choropleth(
             geo_data=gdf_for_map,
             data=gdf_for_map,
-            columns=['AGS', 'num_charging_points'],
+            columns=['AGS', 'Gesamt'],
             key_on='feature.properties.AGS',
             fill_color='Greens',
             fill_opacity=0.7,
             line_opacity=0.2,
-            legend_name='Anzahl der Ladepunkte',
+            legend_name='Number of Charging Points per District',
             highlight=True,
             bins=bins
         ).add_to(m)
@@ -249,18 +262,25 @@ if df is not None:
         folium.GeoJson(
             gdf_for_map,
             style_function=lambda x: {'fillColor': 'transparent', 'color': 'transparent', 'weight': 0},
+            highlight_function=lambda x: {'weight': 2, 'color': NOW_DUNKELBLAU, 'fillOpacity': 0.1},
             tooltip=folium.GeoJsonTooltip(
-                fields=['GEN', 'num_charging_points'],
-                aliases=['Landkreis:', 'Ladepunkte:'],
-                sticky=True
+                fields=['GEN', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen'],
+                aliases=['District:', 'Total Charging Points:', 'HPC (>= 150 kW):', 'Fast Charging (> 22 kW):', 'Normal Charging (<= 22 kW):'],
+                sticky=True,
+                style="""
+                    background-color: white;
+                    border: 2px solid #003247;
+                    border-radius: 6px;
+                    box-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+                    font-size: 13px;
+                    padding: 8px;
+                """
             )
         ).add_to(m)
 
         st_folium(m, use_container_width=True, height=600)
-    elif gdf_districts is None:
-        st.warning("Geodaten (Shapefile) konnten nicht geladen werden. Die Karte wird nicht angezeigt.")
     else:
-        st.warning("Keine Daten für die aktuelle Filterauswahl vorhanden.")
+        st.warning("Geodaten (Shapefile) konnten nicht geladen werden. Die Karte wird nicht angezeigt.")
 
     # --- ABSCHNITT LIMITATIONEN ---
     st.divider()
