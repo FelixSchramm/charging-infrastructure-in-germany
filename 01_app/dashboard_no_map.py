@@ -252,8 +252,8 @@ if df is not None:
         m = folium.Map(location=[51.16, 10.45], tiles="CartoDB positron", zoom_start=6, min_zoom=6, max_bounds=True)
         m.fit_bounds([[47.27, 5.87], [55.06, 15.04]])
 
-        max_val = int(gdf_for_map['Gesamt'].max())
-        bins = [0, 100, 500, 1000, 2500, max_val + 1]
+        max_val = int(gdf_for_map['Gesamt'].max()) if len(gdf_for_map) > 0 else 0
+        bins = sorted(set([0] + [b for b in [100, 500, 1000, 2500] if b < max_val] + [max_val + 1]))
 
         folium.Choropleth(
             geo_data=gdf_for_map,
