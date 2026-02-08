@@ -263,7 +263,7 @@ if df is not None:
             fill_color='Greens',
             fill_opacity=0.7,
             line_opacity=0.2,
-            legend_name='Number of Charging Points per District',
+            legend_name='Anzahl Ladepunkte pro Kreis',
             highlight=True,
             bins=bins
         ).add_to(m)
@@ -274,7 +274,7 @@ if df is not None:
             highlight_function=lambda x: {'weight': 2, 'color': NOW_DUNKELBLAU, 'fillOpacity': 0.1},
             tooltip=folium.GeoJsonTooltip(
                 fields=['GEN', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen'],
-                aliases=['District:', 'Total Charging Points:', 'HPC (>= 150 kW):', 'Fast Charging (> 22 kW):', 'Normal Charging (<= 22 kW):'],
+                aliases=['Kreis:', 'Ladepunkte gesamt:', 'HPC (>= 150 kW):', 'Schnellladen (> 22 kW):', 'Normalladen (<= 22 kW):'],
                 sticky=True,
                 style="""
                     background-color: white;
