@@ -1,6 +1,10 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import geopandas as gpd
+import folium
+from streamlit_folium import st_folium
+from pathlib import Path
 
 # --- SEITENKONFIGURATION & FARBPALETTE ---
 st.set_page_config(
@@ -35,7 +39,21 @@ def load_data():
         st.error("FEHLER: Die Datei 'combined_ladestation_ladepunkt.csv' wurde nicht gefunden. Bitte überprüfe den Pfad.")
         return None
 
+@st.cache_data
+def load_geodata():
+    try:
+        project_root = Path(__file__).parent.parent
+        shapefile_path = project_root / "02_data/02_meta_data/vg250_01-01.gk3.shape.ebenen/vg250_ebenen_0101/VG250_KRS.shp"
+        gdf = gpd.read_file(shapefile_path)
+        for col in gdf.columns:
+            if pd.api.types.is_datetime64_any_dtype(gdf[col]):
+                gdf[col] = gdf[col].astype(str)
+        return gdf
+    except Exception:
+        return None
+
 df = load_data()
+gdf_districts = load_geodata()
 
 if df is not None:
     # --- SEITENLEISTE MIT FILTERN ---
@@ -189,6 +207,61 @@ if df is not None:
         fig_betreiber.update_layout(yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig_betreiber, use_container_width=True, key="fig_betreiber")
 
+    # --- REGIONALE ANALYSE (KARTE) ---
+    st.divider()
+    st.header("Regionale Analyse")
+
+    if gdf_districts is not None and not df_filtered.empty:
+        df_for_map = df_filtered.copy()
+        df_for_map['AGS'] = df_for_map['ARS'].astype(str).str.zfill(12).str[:5]
+
+        charging_per_district = df_for_map.groupby('AGS')['ladepunkt_id'].count().reset_index()
+        charging_per_district.columns = ['AGS', 'num_charging_points']
+
+        merged_gdf = gdf_districts.merge(charging_per_district, on='AGS', how='left')
+        merged_gdf['num_charging_points'] = merged_gdf['num_charging_points'].fillna(0).astype(int)
+        gdf_for_map = merged_gdf[['AGS', 'GEN', 'geometry', 'num_charging_points']].copy()
+
+        m = folium.Map(location=[51.16, 10.45], tiles="CartoDB positron", zoom_start=6, min_zoom=5)
+
+        non_zero = gdf_for_map[gdf_for_map['num_charging_points'] > 0]['num_charging_points']
+        if not non_zero.empty and non_zero.nunique() > 1:
+            bins = list(non_zero.quantile([0, 0.2, 0.4, 0.6, 0.8, 1.0]).unique())
+            if bins[0] > 0:
+                bins.insert(0, 0)
+        else:
+            max_val = gdf_for_map['num_charging_points'].max()
+            bins = [0, max(max_val / 2, 1), max(max_val, 2)]
+
+        folium.Choropleth(
+            geo_data=gdf_for_map,
+            data=gdf_for_map,
+            columns=['AGS', 'num_charging_points'],
+            key_on='feature.properties.AGS',
+            fill_color='Greens',
+            fill_opacity=0.7,
+            line_opacity=0.2,
+            legend_name='Anzahl der Ladepunkte',
+            highlight=True,
+            bins=bins
+        ).add_to(m)
+
+        folium.GeoJson(
+            gdf_for_map,
+            style_function=lambda x: {'fillColor': 'transparent', 'color': 'transparent', 'weight': 0},
+            tooltip=folium.GeoJsonTooltip(
+                fields=['GEN', 'num_charging_points'],
+                aliases=['Landkreis:', 'Ladepunkte:'],
+                sticky=True
+            )
+        ).add_to(m)
+
+        st_folium(m, use_container_width=True, height=600)
+    elif gdf_districts is None:
+        st.warning("Geodaten (Shapefile) konnten nicht geladen werden. Die Karte wird nicht angezeigt.")
+    else:
+        st.warning("Keine Daten für die aktuelle Filterauswahl vorhanden.")
+
     # --- ABSCHNITT LIMITATIONEN ---
     st.divider()
     st.header("Limitationen")
@@ -200,8 +273,6 @@ if df is not None:
 
     - **Verhältnis von Ladepunkten zu E-Fahrzeugen:** Die reine Anzahl an Ladepunkten pro Region ist nur bedingt aussagekräftig. Eine entscheidende Kennzahl ist das Verhältnis zum lokalen E-Fahrzeugbestand, um die tatsächliche Versorgungsdichte zu bewerten. Deutschlandweit teilen sich etwa zehn E-Autos einen öffentlichen Ladepunkt.
 
-    - **Fehlende geografische Analyse:** Das Dashboard enthält keine interaktive Karte, wodurch "weiße Flecken" und regionale Ungleichgewichte nicht visuell analysiert werden können. Dies ließe sich durch Geodaten vom nationalen Open-Data-Portal [GovData.de](https://www.govdata.de/) beheben.
-                            
     - **Zuverlässigkeit und Nutzererfahrung:** Gezählt werden alle registrierten Ladepunkte, unabhängig von ihrem Betriebszustand. Die tatsächliche Ausfallrate aus Nutzersichtgit ist ein entscheidender Qualitätsfaktor, der hier unberücksichtigt bleibt. Diese Diskrepanz zur offiziellen "Uptime" entsteht z.B. durch Softwarefehler oder defekte QR-Codes.
 
     - **Ökonomischer Kontext:** Faktoren wie der komplexe Tarifstrukturen, die durch über gewerbliche 8.000 Betreiber entstehen, Preismodelle und die allgemeine Wirtschaftlichkeit der Standorte werden nicht analysiert. Diese beeinflussen jedoch die Marktdynamik und den weiteren Ausbau maßgeblich.
