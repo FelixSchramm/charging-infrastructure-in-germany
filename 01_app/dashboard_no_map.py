@@ -12,28 +12,31 @@ st.set_page_config(
     layout="wide"
 )
 
-# NOW GmbH Farbpalette
 NOW_GRUEN = "#00B092"
 NOW_DUNKELBLAU = "#003247"
-NOW_HELLBLAU = "#88C5D9"
 NOW_GRAU = "#D3D3D3"
+
+LEISTUNGS_COLORS = {
+    'HPC-Laden (>= 150 kW)': NOW_GRUEN,
+    'Schnellladen (> 22 kW)': NOW_DUNKELBLAU,
+    'Normalladen (<= 22 kW)': NOW_GRAU,
+}
 
 # --- DATEN LADEN & VORBEREITEN ---
 @st.cache_data
 def load_data():
     try:
-        # Passe den Dateipfad entsprechend deiner Ordnerstruktur an
         df = pd.read_parquet('02_data/03_computed_data/combined_ladestation_ladepunkt.parquet')
         df['Inbetriebnahmedatum'] = pd.to_datetime(df['Inbetriebnahmedatum'], errors='coerce')
         df['Jahr'] = df['Inbetriebnahmedatum'].dt.year
         df.dropna(subset=['Inbetriebnahmedatum', 'Bundesland', 'KreisKreisfreieStadt'], inplace=True)
-        
+
         def get_leistungskategorie(leistung):
             if leistung >= 150: return 'HPC-Laden (>= 150 kW)'
             elif leistung > 22: return 'Schnellladen (> 22 kW)'
             else: return 'Normalladen (<= 22 kW)'
         df['Leistungskategorie'] = df['LadeleistungInKW'].apply(get_leistungskategorie)
-        
+
         return df
     except FileNotFoundError:
         st.error("FEHLER: Die Datei 'combined_ladestation_ladepunkt.parquet' wurde nicht gefunden. Bitte überprüfe den Pfad.")
@@ -63,136 +66,89 @@ if df is not None:
 
     min_jahr, max_jahr = int(df['Jahr'].min()), int(df['Jahr'].max())
     selected_jahre = st.sidebar.slider("Zeitraum (Jahr):", min_value=min_jahr, max_value=max_jahr, value=(min_jahr, max_jahr))
-    
+
     bundeslaender = sorted(df['Bundesland'].unique())
     selected_bundeslaender = st.sidebar.multiselect("Bundesland:", options=bundeslaender, default=bundeslaender)
 
     leistungstypen = sorted(df['Leistungskategorie'].unique())
     selected_leistungstypen = st.sidebar.multiselect("Leistungstyp:", options=leistungstypen, default=leistungstypen)
 
-    use_cases = sorted(df['LadeUseCase'].dropna().unique())
-    selected_use_cases = st.sidebar.multiselect("Anwendungsfall:", options=use_cases, default=use_cases)
-    
     search_kreis = st.sidebar.text_input("Landkreis/Stadt (Suche):", "").lower()
     search_betreiber = st.sidebar.text_input("Betreiber (Suche):", "").lower()
 
     # --- DATENFILTERUNG ---
-    df_filtered = df.copy()
-    
-    df_filtered = df_filtered[
-        (df_filtered['Bundesland'].isin(selected_bundeslaender)) &
-        (df_filtered['Jahr'] >= selected_jahre[0]) &
-        (df_filtered['Jahr'] <= selected_jahre[1]) &
-        (df_filtered['Leistungskategorie'].isin(selected_leistungstypen)) &
-        (df_filtered['LadeUseCase'].isin(selected_use_cases))
+    df_filtered = df[
+        (df['Bundesland'].isin(selected_bundeslaender)) &
+        (df['Jahr'] >= selected_jahre[0]) &
+        (df['Jahr'] <= selected_jahre[1]) &
+        (df['Leistungskategorie'].isin(selected_leistungstypen))
     ]
-    
+
     if search_kreis:
         df_filtered = df_filtered[df_filtered['KreisKreisfreieStadt'].str.lower().str.contains(search_kreis, na=False)]
-    
+
     if search_betreiber:
         df_filtered = df_filtered[df_filtered['BetreiberBereinigt'].str.lower().str.contains(search_betreiber, na=False)]
 
     # --- HAUPTSEITE ---
     st.title("Stand der Ladeinfrastruktur in Deutschland")
     st.markdown("Eine interaktive Analyse für die **NOW GmbH**.")
-    
+
     df_stationen_filtered = df_filtered.drop_duplicates(subset='ladestation_id')
 
     # KPIs
     st.header("Statistische Kennzahlen (KPIs)")
     col1, col2, col3, col4 = st.columns(4)
-    num_ladestationen = df_stationen_filtered['ladestation_id'].nunique()
-    num_ladepunkte = len(df_filtered)
-    num_hpc_ladepunkte = len(df_filtered[df_filtered['LadeleistungInKW'] >= 150])
-    leistung_stationen_sum = df_stationen_filtered['InstallierteLadeleistungNLL'].sum() / 1_000_000
-    
-    col1.metric("Anzahl Ladestationen", f"{num_ladestationen:,}".replace(',', '.'))
-    col2.metric("Anzahl Ladepunkte", f"{num_ladepunkte:,}".replace(',', '.'))
-    col3.metric("Anzahl HPC-Ladepunkte", f"{num_hpc_ladepunkte:,}".replace(',', '.'))
-    col4.metric("Gesamtleistung", f"{leistung_stationen_sum:.2f} GW")
-    
+    col1.metric("Anzahl Ladestationen", f"{df_stationen_filtered['ladestation_id'].nunique():,}".replace(',', '.'))
+    col2.metric("Anzahl Ladepunkte", f"{len(df_filtered):,}".replace(',', '.'))
+    col3.metric("Anzahl HPC-Ladepunkte", f"{len(df_filtered[df_filtered['LadeleistungInKW'] >= 150]):,}".replace(',', '.'))
+    col4.metric("Gesamtleistung", f"{df_stationen_filtered['InstallierteLadeleistungNLL'].sum() / 1_000_000:.2f} GW")
+
     st.divider()
 
     # --- Zeitreihen ---
     st.header("Entwicklung über die Zeit")
 
-    # ERSTE REIHE: LADEPUNKTE (GESAMT)
     col_punkt_ges_1, col_punkt_ges_2 = st.columns(2)
     with col_punkt_ges_1:
-        # Kumulative Entwicklung aller Ladepunkte nach Jahr
         cumulative_punkte = df_filtered.groupby('Jahr').size().cumsum().reset_index(name='Anzahl')
         fig_cum_punkte = px.line(cumulative_punkte, x='Jahr', y='Anzahl', title='<b>Kumulative Entwicklung der Ladepunkte (Gesamt)</b>')
         fig_cum_punkte.update_traces(line_color=NOW_DUNKELBLAU)
         st.plotly_chart(fig_cum_punkte, use_container_width=True, key="fig_cum_punkte")
 
     with col_punkt_ges_2:
-        # Jährlicher Zubau aller Ladepunkte
         zubau_punkte_gesamt = df_filtered.groupby('Jahr').size().reset_index(name='Anzahl')
         fig_zubau_punkte_gesamt = px.line(zubau_punkte_gesamt, x='Jahr', y='Anzahl', title='<b>Jährlicher Zubau von Ladepunkten (Gesamt)</b>')
         fig_zubau_punkte_gesamt.update_traces(line_color=NOW_DUNKELBLAU)
         st.plotly_chart(fig_zubau_punkte_gesamt, use_container_width=True, key="fig_zubau_punkte_gesamt")
 
-    # ZWEITE REIHE: LADEPUNKTE (NACH LEISTUNGSKATEGORIE)
+    # Gemeinsame Basis für beide Kategorie-Charts
+    kat_basis = df_filtered.groupby(['Jahr', 'Leistungskategorie']).size().reset_index(name='Anzahl')
+    jahre_range = pd.RangeIndex(start=kat_basis['Jahr'].min(), stop=kat_basis['Jahr'].max() + 1)
+    full_index = pd.MultiIndex.from_product([jahre_range, list(LEISTUNGS_COLORS)], names=['Jahr', 'Leistungskategorie'])
+    kat_basis = kat_basis.set_index(['Jahr', 'Leistungskategorie']).reindex(full_index, fill_value=0).reset_index()
+
     col_punkt_kat_1, col_punkt_kat_2 = st.columns(2)
     with col_punkt_kat_1:
-        # Jährlicher Zubau von Ladepunkten nach Leistung
-        zubau_punkte_kat = df_filtered.groupby(['Jahr', 'Leistungskategorie']).size().reset_index(name='Anzahl')
-        
-        # Sicherstellen, dass alle Jahre für jede Kategorie vorhanden sind
-        jahre_kat = zubau_punkte_kat['Jahr'].unique()
-        kategorien_kat = zubau_punkte_kat['Leistungskategorie'].unique()
-        df_full_kat = pd.DataFrame({'Jahr': jahre_kat}).merge(pd.DataFrame({'Leistungskategorie': kategorien_kat}), how='cross')
-        
-        zubau_punkte_kat = df_full_kat.merge(zubau_punkte_kat, on=['Jahr', 'Leistungskategorie'], how='left').fillna(0)
-
         fig_zubau_punkte_kat = px.line(
-            zubau_punkte_kat, 
-            x='Jahr', 
-            y='Anzahl', 
-            color='Leistungskategorie',  
-            title='<b>Jährlicher Zubau von Ladepunkten nach Leistung</b>'
+            kat_basis, x='Jahr', y='Anzahl', color='Leistungskategorie',
+            title='<b>Jährlicher Zubau von Ladepunkten nach Leistung</b>',
+            color_discrete_map=LEISTUNGS_COLORS,
         )
-        
-        color_map_line = {'HPC-Laden (>= 150 kW)': NOW_GRUEN, 'Schnellladen (> 22 kW)': NOW_DUNKELBLAU, 'Normalladen (<= 22 kW)': NOW_GRAU}
-        for data in fig_zubau_punkte_kat.data:
-            data.line.color = color_map_line.get(data.name, data.line.color)
-        
-        fig_zubau_punkte_kat.update_layout(
-            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
-        )
+        fig_zubau_punkte_kat.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
         st.plotly_chart(fig_zubau_punkte_kat, use_container_width=True, key="fig_zubau_punkte_kat")
 
     with col_punkt_kat_2:
-        # Kumulative Entwicklung der Ladepunkte nach Leistung und Jahr
-        cumulative_ladepunkte_kat = df_filtered.groupby(['Jahr', 'Leistungskategorie']).size().reset_index(name='Anzahl')
-        
-        if not cumulative_ladepunkte_kat.empty:
-            jahre_range = pd.RangeIndex(start=cumulative_ladepunkte_kat['Jahr'].min(), stop=cumulative_ladepunkte_kat['Jahr'].max() + 1)
-            kategorien = cumulative_ladepunkte_kat['Leistungskategorie'].unique()
-            
-            full_index = pd.MultiIndex.from_product([jahre_range, kategorien], names=['Jahr', 'Leistungskategorie'])
-            
-            cumulative_ladepunkte_kat = cumulative_ladepunkte_kat.set_index(['Jahr', 'Leistungskategorie']).reindex(full_index, fill_value=0).reset_index()
-            cumulative_ladepunkte_kat['Anzahl'] = cumulative_ladepunkte_kat.groupby('Leistungskategorie')['Anzahl'].cumsum()
-        
+        kat_kumulativ = kat_basis.copy()
+        kat_kumulativ['Anzahl'] = kat_kumulativ.groupby('Leistungskategorie')['Anzahl'].cumsum()
         fig_cum_ladepunkte_kat = px.line(
-            cumulative_ladepunkte_kat, 
-            x='Jahr', 
-            y='Anzahl', 
-            color='Leistungskategorie',  
-            title='<b>Kumulative Entwicklung der Ladepunkte nach Leistung</b>'
+            kat_kumulativ, x='Jahr', y='Anzahl', color='Leistungskategorie',
+            title='<b>Kumulative Entwicklung der Ladepunkte nach Leistung</b>',
+            color_discrete_map=LEISTUNGS_COLORS,
         )
-        
-        color_discrete_map = {'HPC-Laden (>= 150 kW)': NOW_GRUEN, 'Schnellladen (> 22 kW)': NOW_DUNKELBLAU, 'Normalladen (<= 22 kW)': NOW_GRAU}
-        for data in fig_cum_ladepunkte_kat.data:
-            data.line.color = color_discrete_map.get(data.name, data.line.color)
-        
-        fig_cum_ladepunkte_kat.update_layout(
-            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
-        )
+        fig_cum_ladepunkte_kat.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
         st.plotly_chart(fig_cum_ladepunkte_kat, use_container_width=True, key="fig_cum_ladepunkte_kat")
-        
+
     st.divider()
 
     # Detaillierte Analysen
@@ -200,8 +156,7 @@ if df is not None:
     col_detail1, col_detail2 = st.columns(2)
     with col_detail1:
         kategorie_counts = df_filtered['Leistungskategorie'].value_counts().reset_index()
-        color_map_pie = {'HPC-Laden (>= 150 kW)': NOW_GRUEN, 'Schnellladen (> 22 kW)': NOW_DUNKELBLAU, 'Normalladen (<= 22 kW)': NOW_GRAU}
-        fig_kategorien = px.pie(kategorie_counts, names='Leistungskategorie', values='count', title='<b>Anteil der Ladepunkttypen</b>', color='Leistungskategorie', color_discrete_map=color_map_pie)
+        fig_kategorien = px.pie(kategorie_counts, names='Leistungskategorie', values='count', title='<b>Anteil der Ladepunkttypen</b>', color='Leistungskategorie', color_discrete_map=LEISTUNGS_COLORS)
         st.plotly_chart(fig_kategorien, use_container_width=True, key="fig_kategorien")
     with col_detail2:
         top_10_betreiber = df_filtered['BetreiberBereinigt'].value_counts().nlargest(10).reset_index()
@@ -218,42 +173,39 @@ if df is not None:
         df_for_map = df[
             (df['Jahr'] >= selected_jahre[0]) &
             (df['Jahr'] <= selected_jahre[1]) &
-            (df['Leistungskategorie'].isin(selected_leistungstypen)) &
-            (df['LadeUseCase'].isin(selected_use_cases))
+            (df['Leistungskategorie'].isin(selected_leistungstypen))
         ]
         if search_kreis:
             df_for_map = df_for_map[df_for_map['KreisKreisfreieStadt'].str.lower().str.contains(search_kreis, na=False)]
         if search_betreiber:
             df_for_map = df_for_map[df_for_map['BetreiberBereinigt'].str.lower().str.contains(search_betreiber, na=False)]
-        df_for_map['AGS'] = df_for_map['ARS'].astype(str).str.zfill(12).str[:5]
 
-        # Gesamtzahl pro Kreis
-        total_per_district = df_for_map.groupby('AGS')['ladepunkt_id'].count().reset_index()
-        total_per_district.columns = ['AGS', 'Gesamt']
+        df_for_map = df_for_map.assign(AGS=df_for_map['ARS'].astype(str).str.zfill(5))
 
-        # Aufschlüsselung nach Leistungskategorie
-        kat_per_district = df_for_map.groupby(['AGS', 'Leistungskategorie']).size().unstack(fill_value=0).reset_index()
-        for col_name in ['HPC-Laden (>= 150 kW)', 'Schnellladen (> 22 kW)', 'Normalladen (<= 22 kW)']:
-            if col_name not in kat_per_district.columns:
-                kat_per_district[col_name] = 0
-        kat_per_district = kat_per_district.rename(columns={
+        agg = df_for_map.groupby(['AGS', 'Leistungskategorie']).size().unstack(fill_value=0).rename(columns={
             'HPC-Laden (>= 150 kW)': 'HPC',
             'Schnellladen (> 22 kW)': 'Schnellladen',
-            'Normalladen (<= 22 kW)': 'Normalladen'
+            'Normalladen (<= 22 kW)': 'Normalladen',
         })
-
-        district_data = total_per_district.merge(kat_per_district[['AGS', 'HPC', 'Schnellladen', 'Normalladen']], on='AGS', how='left')
+        for col_name in ['HPC', 'Schnellladen', 'Normalladen']:
+            if col_name not in agg.columns:
+                agg[col_name] = 0
+        agg['Gesamt'] = agg[['HPC', 'Schnellladen', 'Normalladen']].sum(axis=1)
+        district_data = agg.reset_index()
 
         merged_gdf = gdf_districts.merge(district_data, on='AGS', how='left')
         for col_name in ['Gesamt', 'HPC', 'Schnellladen', 'Normalladen']:
             merged_gdf[col_name] = merged_gdf[col_name].fillna(0).astype(int)
-        gdf_for_map = merged_gdf[['AGS', 'GEN', 'geometry', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen']].copy()
+        gdf_for_map = merged_gdf[['AGS', 'GEN', 'geometry', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen']]
 
         m = folium.Map(location=[51.16, 10.45], tiles="CartoDB positron", zoom_start=6, min_zoom=6, max_bounds=True)
         m.fit_bounds([[47.27, 5.87], [55.06, 15.04]])
 
         max_val = int(gdf_for_map['Gesamt'].max()) if len(gdf_for_map) > 0 else 0
-        bins = sorted(set([0] + [b for b in [100, 500, 1000, 2500] if b < max_val] + [max_val + 1]))
+        bins = sorted(set([0] + [b for b in [100, 500, 1000, 2500] if 0 < b < max_val] + [max_val + 1]))
+        if len(bins) < 4:
+            extras = [i for i in range(1, 10) if i not in bins][:4 - len(bins)]
+            bins = sorted(set(bins + extras))
 
         folium.Choropleth(
             geo_data=gdf_for_map,

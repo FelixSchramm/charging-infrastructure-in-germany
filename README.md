@@ -42,6 +42,20 @@ The project follows a clear and professional folder structure for organization a
 └── config.toml                # Streamlit configuration for app layout
 ```
 
+## Automated Data Pipeline
+
+The data is automatically updated on the **1st of every month** via a GitHub Actions workflow.
+
+The pipeline ([`.github/workflows/update_data.yml`](.github/workflows/update_data.yml)) runs [`scripts/update_data.py`](scripts/update_data.py) and performs the following steps:
+
+1. Scrapes the [BNetzA download page](https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/DownloadundKontakt.html) to find the current XLSX link
+2. Downloads the latest charging station register (~26 MB)
+3. Transforms the wide format (up to 6 connectors per row) into one row per charging point
+4. Assigns district codes (AGS) via a spatial join with the shapefile
+5. Saves the result as `combined_ladestation_ladepunkt.parquet` and commits it to the repository
+
+The workflow can also be triggered manually via **GitHub Actions → Run workflow**.
+
 ## How to Run the Project
 
 To run the dashboard locally, follow these steps:

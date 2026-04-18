@@ -1,0 +1,16 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Data
+02_data/01_original_data/
+02_data/03_computed_data/*.csv
+
+# Notebooks output
+03_notebooks/*.html
+
+# OS
+.DS_Store
