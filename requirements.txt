@@ -1,7 +1,0 @@
-streamlit==1.54.0
-pandas
-pyarrow
-plotly
-geopandas
-folium
-streamlit-folium
