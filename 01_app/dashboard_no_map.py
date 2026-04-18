@@ -91,8 +91,7 @@ if df is not None:
         df_filtered = df_filtered[df_filtered['BetreiberBereinigt'].str.lower().str.contains(search_betreiber, na=False)]
 
     # --- HAUPTSEITE ---
-    st.title("Stand der Ladeinfrastruktur in Deutschland")
-    st.markdown("Eine interaktive Analyse für die **NOW GmbH**.")
+    st.title("Ladeinfrastruktur in Deutschland")
 
     df_stationen_filtered = df_filtered.drop_duplicates(subset='ladestation_id')
 
@@ -109,45 +108,62 @@ if df is not None:
     # --- Zeitreihen ---
     st.header("Entwicklung über die Zeit")
 
-    col_punkt_ges_1, col_punkt_ges_2 = st.columns(2)
-    with col_punkt_ges_1:
-        cumulative_punkte = df_filtered.groupby('Jahr').size().cumsum().reset_index(name='Anzahl')
-        fig_cum_punkte = px.line(cumulative_punkte, x='Jahr', y='Anzahl', title='<b>Kumulative Entwicklung der Ladepunkte (Gesamt)</b>')
-        fig_cum_punkte.update_traces(line_color=NOW_DUNKELBLAU)
-        st.plotly_chart(fig_cum_punkte, use_container_width=True, key="fig_cum_punkte")
-
-    with col_punkt_ges_2:
-        zubau_punkte_gesamt = df_filtered.groupby('Jahr').size().reset_index(name='Anzahl')
-        fig_zubau_punkte_gesamt = px.line(zubau_punkte_gesamt, x='Jahr', y='Anzahl', title='<b>Jährlicher Zubau von Ladepunkten (Gesamt)</b>')
-        fig_zubau_punkte_gesamt.update_traces(line_color=NOW_DUNKELBLAU)
-        st.plotly_chart(fig_zubau_punkte_gesamt, use_container_width=True, key="fig_zubau_punkte_gesamt")
-
-    # Gemeinsame Basis für beide Kategorie-Charts
+    # Gemeinsame Basis für alle vier Charts (ab 2010)
+    zubau_gesamt = df_filtered.groupby('Jahr').size().reset_index(name='Anzahl')
+    zubau_gesamt = zubau_gesamt[zubau_gesamt['Jahr'] >= 2010]
     kat_basis = df_filtered.groupby(['Jahr', 'Leistungskategorie']).size().reset_index(name='Anzahl')
-    jahre_range = pd.RangeIndex(start=kat_basis['Jahr'].min(), stop=kat_basis['Jahr'].max() + 1)
+    jahre_range = pd.RangeIndex(start=max(2010, kat_basis['Jahr'].min()), stop=kat_basis['Jahr'].max() + 1)
     full_index = pd.MultiIndex.from_product([jahre_range, list(LEISTUNGS_COLORS)], names=['Jahr', 'Leistungskategorie'])
     kat_basis = kat_basis.set_index(['Jahr', 'Leistungskategorie']).reindex(full_index, fill_value=0).reset_index()
 
-    col_punkt_kat_1, col_punkt_kat_2 = st.columns(2)
-    with col_punkt_kat_1:
-        fig_zubau_punkte_kat = px.line(
+    # ERSTE REIHE: Jährlicher Zubau
+    col1, col2 = st.columns(2)
+    with col1:
+        fig_zubau_gesamt = px.bar(
+            zubau_gesamt, x='Jahr', y='Anzahl',
+            title='<b>Jährlicher Zubau von Ladepunkten (Gesamt)</b>',
+            color_discrete_sequence=[NOW_DUNKELBLAU],
+        )
+        fig_zubau_gesamt.update_layout(bargap=0.2)
+        st.plotly_chart(fig_zubau_gesamt, use_container_width=True, key="fig_zubau_gesamt")
+
+    with col2:
+        fig_zubau_kat = px.bar(
             kat_basis, x='Jahr', y='Anzahl', color='Leistungskategorie',
-            title='<b>Jährlicher Zubau von Ladepunkten nach Leistung</b>',
+            title='<b>Jährlicher Zubau nach Leistungstyp</b>',
             color_discrete_map=LEISTUNGS_COLORS,
         )
-        fig_zubau_punkte_kat.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
-        st.plotly_chart(fig_zubau_punkte_kat, use_container_width=True, key="fig_zubau_punkte_kat")
+        fig_zubau_kat.update_layout(bargap=0.2, legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
+        st.plotly_chart(fig_zubau_kat, use_container_width=True, key="fig_zubau_kat")
 
-    with col_punkt_kat_2:
+    # ZWEITE REIHE: Kumulative Entwicklung
+    col3, col4 = st.columns(2)
+    with col3:
+        zubau_alle_jahre = df_filtered.groupby('Jahr').size().reset_index(name='Anzahl')
+        cumulative_gesamt = zubau_gesamt.copy()
+        offset = zubau_alle_jahre[zubau_alle_jahre['Jahr'] < 2010]['Anzahl'].sum()
+        cumulative_gesamt['Anzahl'] = cumulative_gesamt['Anzahl'].cumsum() + offset
+        fig_cum_gesamt = px.bar(
+            cumulative_gesamt, x='Jahr', y='Anzahl',
+            title='<b>Kumulativer Bestand an Ladepunkten (Gesamt)</b>',
+            color_discrete_sequence=[NOW_DUNKELBLAU],
+        )
+        fig_cum_gesamt.update_layout(bargap=0.2)
+        st.plotly_chart(fig_cum_gesamt, use_container_width=True, key="fig_cum_gesamt")
+
+    with col4:
+        kat_alle_jahre = df_filtered.groupby(['Jahr', 'Leistungskategorie']).size().reset_index(name='Anzahl')
+        kat_offsets = kat_alle_jahre[kat_alle_jahre['Jahr'] < 2010].groupby('Leistungskategorie')['Anzahl'].sum()
         kat_kumulativ = kat_basis.copy()
         kat_kumulativ['Anzahl'] = kat_kumulativ.groupby('Leistungskategorie')['Anzahl'].cumsum()
-        fig_cum_ladepunkte_kat = px.line(
+        kat_kumulativ['Anzahl'] += kat_kumulativ['Leistungskategorie'].map(kat_offsets).fillna(0).astype(int)
+        fig_cum_kat = px.bar(
             kat_kumulativ, x='Jahr', y='Anzahl', color='Leistungskategorie',
-            title='<b>Kumulative Entwicklung der Ladepunkte nach Leistung</b>',
+            title='<b>Kumulativer Bestand nach Leistungstyp</b>',
             color_discrete_map=LEISTUNGS_COLORS,
         )
-        fig_cum_ladepunkte_kat.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
-        st.plotly_chart(fig_cum_ladepunkte_kat, use_container_width=True, key="fig_cum_ladepunkte_kat")
+        fig_cum_kat.update_layout(bargap=0.2, legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
+        st.plotly_chart(fig_cum_kat, use_container_width=True, key="fig_cum_kat")
 
     st.divider()
 
@@ -243,7 +259,7 @@ if df is not None:
     else:
         st.warning("Geodaten (Shapefile) konnten nicht geladen werden. Die Karte wird nicht angezeigt.")
 
-    # --- ABSCHNITT LIMITATIONEN ---
+    # --- ABSCHNITT LIMITATIONEN & QUELLEN ---
     st.divider()
     st.header("Limitationen")
 
@@ -257,4 +273,18 @@ if df is not None:
     - **Zuverlässigkeit und Nutzererfahrung:** Gezählt werden alle registrierten Ladepunkte, unabhängig von ihrem Betriebszustand. Die tatsächliche Ausfallrate aus Nutzersichtgit ist ein entscheidender Qualitätsfaktor, der hier unberücksichtigt bleibt. Diese Diskrepanz zur offiziellen "Uptime" entsteht z.B. durch Softwarefehler oder defekte QR-Codes.
 
     - **Ökonomischer Kontext:** Faktoren wie der komplexe Tarifstrukturen, die durch über gewerbliche 8.000 Betreiber entstehen, Preismodelle und die allgemeine Wirtschaftlichkeit der Standorte werden nicht analysiert. Diese beeinflussen jedoch die Marktdynamik und den weiteren Ausbau maßgeblich.
+    """)
+
+    st.divider()
+    st.header("Quellen")
+
+    datenstand = pd.to_datetime(df['Inbetriebnahmedatum']).max().strftime('%d.%m.%Y')
+
+    st.markdown(f"""
+    - Bundesnetzagentur ({pd.to_datetime(df['Inbetriebnahmedatum']).max().year}) *Ladesäulenregister der öffentlich zugänglichen Ladepunkte*, Datenstand {datenstand}. Bonn: Bundesnetzagentur. [↗](https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/DownloadundKontakt.html)
+    - Bundesamt für Kartographie und Geodäsie (2024) *Verwaltungsgebiete 1:250 000 (VG250)*. Frankfurt am Main: BKG. [↗](https://gdz.bkg.bund.de/)
+    - Lobas-Funck, F., Meister, S. und Weißbach, L. (2024) *Whitepaper Lade-Use-Cases*. Berlin: Nationale Leitstelle Ladeinfrastruktur / NOW GmbH. [↗](https://nationale-leitstelle.de/wp-content/uploads/2024/07/Whitepaper_LUC_Nationale-Leitstelle-Ladeinfrastruktur_2024.pdf)
+    - Reiner Lemoine Institut (2024) *Ladeinfrastruktur nach 2025/2030: Szenarien für den Markthochlauf*, im Auftrag der NOW GmbH. Berlin: NOW GmbH. [↗](https://www.now-gmbh.de/wp-content/uploads/2024/06/Studie_Ladeinfrastruktur-2025-2030_Neuauflage-2024.pdf)
+    - Nationale Leitstelle Ladeinfrastruktur (2024) *ö-LIS Report: Monitoringbericht öffentliche Ladeinfrastruktur*. Berlin: NOW GmbH. [↗](https://nationale-leitstelle.de/en/downloads/)
+    - Nationale Leitstelle Ladeinfrastruktur (2024) *Studie: Einfach zu Hause laden*. Berlin: NOW GmbH. [↗](https://nationale-leitstelle.de/neue-studie-gibt-wichtige-einblicke-in-das-ladeverhalten-von-privatpersonen/)
     """)
