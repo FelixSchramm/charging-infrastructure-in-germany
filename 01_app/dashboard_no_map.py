@@ -23,7 +23,7 @@ NOW_GRAU = "#D3D3D3"
 def load_data():
     try:
         # Passe den Dateipfad entsprechend deiner Ordnerstruktur an
-        df = pd.read_csv('02_data/03_computed_data/combined_ladestation_ladepunkt.csv', low_memory=False)
+        df = pd.read_parquet('02_data/03_computed_data/combined_ladestation_ladepunkt.parquet')
         df['Inbetriebnahmedatum'] = pd.to_datetime(df['Inbetriebnahmedatum'], errors='coerce')
         df['Jahr'] = df['Inbetriebnahmedatum'].dt.year
         df.dropna(subset=['Inbetriebnahmedatum', 'Bundesland', 'KreisKreisfreieStadt'], inplace=True)
@@ -36,7 +36,7 @@ def load_data():
         
         return df
     except FileNotFoundError:
-        st.error("FEHLER: Die Datei 'combined_ladestation_ladepunkt.csv' wurde nicht gefunden. Bitte überprüfe den Pfad.")
+        st.error("FEHLER: Die Datei 'combined_ladestation_ladepunkt.parquet' wurde nicht gefunden. Bitte überprüfe den Pfad.")
         return None
 
 @st.cache_data
