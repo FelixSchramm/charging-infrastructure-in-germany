@@ -57,8 +57,18 @@ def load_geodata():
     except Exception:
         return None
 
+@st.cache_data
+def load_kba_data():
+    try:
+        project_root = Path(__file__).parent.parent
+        kba_path = project_root / "02_data/03_computed_data/kba_ev_bestand.parquet"
+        return pd.read_parquet(kba_path)
+    except Exception:
+        return None
+
 df = load_data()
 gdf_districts = load_geodata()
+df_kba = load_kba_data()
 
 if df is not None:
     # --- SEITENLEISTE MIT FILTERN ---
@@ -93,15 +103,32 @@ if df is not None:
     # --- HAUPTSEITE ---
     st.title("Ladeinfrastruktur in Deutschland")
 
+    bnetza_stand = df['Inbetriebnahmedatum'].max().strftime('%d.%m.%Y')
+    if df_kba is not None:
+        raw = df_kba['Berichtszeitpunkt'].iloc[0]  # e.g. "2024.04"
+        year, month = raw.split('.')
+        kba_stand = pd.Timestamp(year=int(year), month=int(month), day=1).strftime('%m/%Y')
+    else:
+        kba_stand = "–"
+    st.markdown(
+        f'<p style="text-align:left; color:#999; font-size:0.85rem; margin-top:-1rem;">'
+        f'Datenstand: BNetzA: {bnetza_stand} | KBA: {kba_stand}</p>',
+        unsafe_allow_html=True
+    )
+
     df_stationen_filtered = df_filtered.drop_duplicates(subset='ladestation_id')
 
     # KPIs
-    st.header("Statistische Kennzahlen (KPIs)")
+    st.markdown("""
+        <style>
+        [data-testid="stMetricLabel"] p { font-size: 1.2rem !important; }
+        </style>
+    """, unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Anzahl Ladestationen", f"{df_stationen_filtered['ladestation_id'].nunique():,}".replace(',', '.'))
-    col2.metric("Anzahl Ladepunkte", f"{len(df_filtered):,}".replace(',', '.'))
-    col3.metric("Anzahl HPC-Ladepunkte", f"{len(df_filtered[df_filtered['LadeleistungInKW'] >= 150]):,}".replace(',', '.'))
-    col4.metric("Gesamtleistung", f"{df_stationen_filtered['InstallierteLadeleistungNLL'].sum() / 1_000_000:.2f} GW")
+    col1.metric("Ladestationen", f"{df_stationen_filtered['ladestation_id'].nunique():,}".replace(',', '.'))
+    col2.metric("Ladepunkte", f"{len(df_filtered):,}".replace(',', '.'))
+    col3.metric("HPC-Ladepunkte", f"{len(df_filtered[df_filtered['LadeleistungInKW'] >= 150]):,}".replace(',', '.'))
+    col4.metric("Gesamtleistung", f"{df_stationen_filtered['InstallierteLadeleistungNLL'].sum() / 1_000_000:.2f} GW".replace('.', ','))
 
     st.divider()
 
@@ -212,37 +239,79 @@ if df is not None:
         merged_gdf = gdf_districts.merge(district_data, on='AGS', how='left')
         for col_name in ['Gesamt', 'HPC', 'Schnellladen', 'Normalladen']:
             merged_gdf[col_name] = merged_gdf[col_name].fillna(0).astype(int)
-        gdf_for_map = merged_gdf[['AGS', 'GEN', 'geometry', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen']]
+
+        if df_kba is not None:
+            merged_gdf = merged_gdf.merge(df_kba[['AGS', 'bev_bestand', 'phev_bestand']], on='AGS', how='left')
+            merged_gdf['bev_bestand'] = merged_gdf['bev_bestand'].fillna(0).astype(int)
+            merged_gdf['phev_bestand'] = merged_gdf['phev_bestand'].fillna(0).astype(int)
+            merged_gdf['gewichteter_bestand'] = merged_gdf['bev_bestand'] + 0.5 * merged_gdf['phev_bestand']
+            merged_gdf['lp_pro_ev'] = (
+                merged_gdf['Gesamt'] / merged_gdf['gewichteter_bestand'].replace(0, float('nan'))
+            ).round(4)
+        else:
+            merged_gdf['bev_bestand'] = 0
+            merged_gdf['phev_bestand'] = 0
+            merged_gdf['gewichteter_bestand'] = float('nan')
+            merged_gdf['lp_pro_ev'] = float('nan')
+
+        gdf_for_map = merged_gdf[['AGS', 'GEN', 'geometry', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen',
+                                   'bev_bestand', 'phev_bestand', 'lp_pro_ev']]
 
         m = folium.Map(location=[51.16, 10.45], tiles="CartoDB positron", zoom_start=6, min_zoom=6, max_bounds=True)
         m.fit_bounds([[47.27, 5.87], [55.06, 15.04]])
 
-        max_val = int(gdf_for_map['Gesamt'].max()) if len(gdf_for_map) > 0 else 0
-        bins = sorted(set([0] + [b for b in [100, 500, 1000, 2500] if 0 < b < max_val] + [max_val + 1]))
-        if len(bins) < 4:
-            extras = [i for i in range(1, 10) if i not in bins][:4 - len(bins)]
-            bins = sorted(set(bins + extras))
+        use_ev_metric = df_kba is not None and gdf_for_map['lp_pro_ev'].notna().any()
+
+        if use_ev_metric:
+            valid_vals = gdf_for_map['lp_pro_ev'].dropna()
+            true_max = float(valid_vals.max()) if len(valid_vals) > 0 else 0.2
+            bin_candidates = [0.01, 0.02, 0.05, 0.08, 0.12, 0.2, 0.35]
+            bins = sorted(set([0.0] + [b for b in bin_candidates if 0 < b < true_max] + [round(true_max * 1.001, 6)]))
+            if len(bins) < 4:
+                bins = [0.0, round(true_max / 3, 6), round(true_max * 2 / 3, 6), round(true_max * 1.001, 6)]
+            choropleth_col = 'lp_pro_ev'
+            legend_name = 'Ladepunkte je gewichtetem EV-Bestand (BEV=1, PHEV=0,5)'
+        else:
+            max_val = int(gdf_for_map['Gesamt'].max()) if len(gdf_for_map) > 0 else 0
+            bins = sorted(set([0] + [b for b in [100, 500, 1000, 2500] if 0 < b < max_val] + [max_val + 1]))
+            if len(bins) < 4:
+                extras = [i for i in range(1, 10) if i not in bins][:4 - len(bins)]
+                bins = sorted(set(bins + extras))
+            choropleth_col = 'Gesamt'
+            legend_name = 'Anzahl Ladepunkte pro Kreis'
+
+        gdf_choropleth = gdf_for_map.copy()
+        if use_ev_metric:
+            gdf_choropleth['lp_pro_ev'] = gdf_choropleth['lp_pro_ev'].fillna(0)
 
         folium.Choropleth(
-            geo_data=gdf_for_map,
-            data=gdf_for_map,
-            columns=['AGS', 'Gesamt'],
+            geo_data=gdf_choropleth,
+            data=gdf_choropleth,
+            columns=['AGS', choropleth_col],
             key_on='feature.properties.AGS',
             fill_color='Greens',
             fill_opacity=0.7,
             line_opacity=0.2,
-            legend_name='Anzahl Ladepunkte pro Kreis',
+            legend_name=legend_name,
             highlight=True,
-            bins=bins
+            bins=bins,
+            nan_fill_color=NOW_GRAU,
+            nan_fill_opacity=0.4,
         ).add_to(m)
+
+        tooltip_fields = ['GEN', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen']
+        tooltip_aliases = ['Kreis:', 'Ladepunkte gesamt:', 'HPC (>= 150 kW):', 'Schnellladen (> 22 kW):', 'Normalladen (<= 22 kW):']
+        if use_ev_metric:
+            tooltip_fields += ['bev_bestand', 'phev_bestand', 'lp_pro_ev']
+            tooltip_aliases += ['BEV-Bestand:', 'PHEV-Bestand:', 'LP je gew. EV-Bestand:']
 
         folium.GeoJson(
             gdf_for_map,
             style_function=lambda x: {'fillColor': 'transparent', 'color': 'transparent', 'weight': 0},
             highlight_function=lambda x: {'weight': 2, 'color': NOW_DUNKELBLAU, 'fillOpacity': 0.1},
             tooltip=folium.GeoJsonTooltip(
-                fields=['GEN', 'Gesamt', 'HPC', 'Schnellladen', 'Normalladen'],
-                aliases=['Kreis:', 'Ladepunkte gesamt:', 'HPC (>= 150 kW):', 'Schnellladen (> 22 kW):', 'Normalladen (<= 22 kW):'],
+                fields=tooltip_fields,
+                aliases=tooltip_aliases,
                 sticky=True,
                 style="""
                     background-color: white;
@@ -268,7 +337,7 @@ if df is not None:
 
     - **Auslastungsgrad:** Das Dashboard erfasst den Bestand, aber nicht die tatsächliche Nutzung der Ladeinfrastruktur. Geringe Auslastung ist für einige Standorte eine zentrale Herausforderung, die hier nicht abgebildet wird. Das kann mit Metriken wie **durchschnittliche Ladevorgänge pro Ladepunkt und Tag** oder **durchschnittlich verladene Energiemenge pro Ladepunkt und Tag** ergänzt werden.
 
-    - **Verhältnis von Ladepunkten zu E-Fahrzeugen:** Die reine Anzahl an Ladepunkten pro Region ist nur bedingt aussagekräftig. Eine entscheidende Kennzahl ist das Verhältnis zum lokalen E-Fahrzeugbestand, um die tatsächliche Versorgungsdichte zu bewerten. Deutschlandweit teilen sich etwa zehn E-Autos einen öffentlichen Ladepunkt.
+    - **Verhältnis von Ladepunkten zu E-Fahrzeugen:** Die Karte zeigt das Verhältnis der öffentlichen Ladepunkte zum gewichteten lokalen E-Fahrzeugbestand (BEV zählt einfach, PHEV halb). Der Fahrzeugbestand basiert auf KBA-Daten (Zulassungsbezirke, Stichtag laut Quelle). Absolute Bestandszahlen werden vom KBA nicht veröffentlicht und werden näherungsweise aus den veröffentlichten Prozentanteilen berechnet.
 
     - **Zuverlässigkeit und Nutzererfahrung:** Gezählt werden alle registrierten Ladepunkte, unabhängig von ihrem Betriebszustand. Die tatsächliche Ausfallrate aus Nutzersichtgit ist ein entscheidender Qualitätsfaktor, der hier unberücksichtigt bleibt. Diese Diskrepanz zur offiziellen "Uptime" entsteht z.B. durch Softwarefehler oder defekte QR-Codes.
 
@@ -279,9 +348,13 @@ if df is not None:
     st.header("Quellen")
 
     datenstand = pd.to_datetime(df['Inbetriebnahmedatum']).max().strftime('%d.%m.%Y')
+    kba_stand = ""
+    if df_kba is not None and 'Berichtszeitpunkt' in df_kba.columns:
+        kba_stand = f", Berichtszeitpunkt {df_kba['Berichtszeitpunkt'].iloc[0]}"
 
     st.markdown(f"""
     - Bundesnetzagentur ({pd.to_datetime(df['Inbetriebnahmedatum']).max().year}) *Ladesäulenregister der öffentlich zugänglichen Ladepunkte*, Datenstand {datenstand}. Bonn: Bundesnetzagentur. [↗](https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/DownloadundKontakt.html)
+    - Kraftfahrt-Bundesamt (KBA) *FZ Pkw mit Elektroantrieb nach Zulassungsbezirken*{kba_stand}. Flensburg: KBA. [↗](https://das-kba-statistikportal.hub.arcgis.com/datasets/fz-pkw-mit-elektroantrieb-zulassungsbezirk/about)
     - Bundesamt für Kartographie und Geodäsie (2024) *Verwaltungsgebiete 1:250 000 (VG250)*. Frankfurt am Main: BKG. [↗](https://gdz.bkg.bund.de/)
     - Lobas-Funck, F., Meister, S. und Weißbach, L. (2024) *Whitepaper Lade-Use-Cases*. Berlin: Nationale Leitstelle Ladeinfrastruktur / NOW GmbH. [↗](https://nationale-leitstelle.de/wp-content/uploads/2024/07/Whitepaper_LUC_Nationale-Leitstelle-Ladeinfrastruktur_2024.pdf)
     - Reiner Lemoine Institut (2024) *Ladeinfrastruktur nach 2025/2030: Szenarien für den Markthochlauf*, im Auftrag der NOW GmbH. Berlin: NOW GmbH. [↗](https://www.now-gmbh.de/wp-content/uploads/2024/06/Studie_Ladeinfrastruktur-2025-2030_Neuauflage-2024.pdf)
