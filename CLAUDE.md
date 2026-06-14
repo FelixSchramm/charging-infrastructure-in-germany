@@ -1,0 +1,40 @@
+# CLAUDE.md
+
+Compact project context for Claude Code. Keep this short and current.
+
+## What this is
+Streamlit dashboard visualizing Germany's public charging infrastructure
+(BNetzA Ladesäulenregister + KBA EV stock). Live: https://ladeinfrastruktur-in-deutschland.streamlit.app/
+
+## Stack & tooling
+- Python >=3.12, package manager: **uv** (`uv sync`, `uv run …`). Venv: `.venv/`.
+- Key deps: streamlit==1.54.0, pandas, geopandas, plotly, folium, pyarrow.
+
+## Run
+```bash
+uv run streamlit run 01_app/dashboard_no_map.py
+```
+(Entry point is `dashboard_no_map.py` — the README still says `dashboard.py`, which is stale.)
+
+## Layout
+- `01_app/dashboard_no_map.py` — the Streamlit app (single file).
+- `01_app/_data_version.py` — `LAST_UPDATED` stamp; imported by the app so a
+  data commit forces a Streamlit Cloud redeploy. Overwritten by the CI workflows.
+- `scripts/update_data.py` — downloads BNetzA xlsx, writes the parquet.
+- `scripts/update_kba_data.py` — updates the KBA EV-stock parquet.
+- `02_data/03_computed_data/combined_ladestation_ladepunkt.parquet` — main data (~7 MB).
+- `02_data/03_computed_data/kba_ev_bestand.parquet` — KBA EV stock.
+- `02_data/02_meta_data/…/VG250_KRS.shp` — district shapefile for spatial join.
+
+## Data pipeline (GitHub Actions)
+- `.github/workflows/update_data.yml` — monthly (1st, 06:00 UTC), commits the
+  charging parquet + `_data_version.py`.
+- `.github/workflows/update_kba_data.yml` — yearly (May 1), commits the KBA parquet.
+- Data is committed **into the repo** (read directly by Streamlit Cloud). See the
+  README note for the trade-off and possible bucket/DuckDB future steps.
+
+## Conventions
+- App reads parquet via paths relative to repo root (cwd), e.g.
+  `pd.read_parquet('02_data/03_computed_data/…')`.
+- `@st.cache_data(ttl=3600)` on the loaders — refreshes hourly.
+- Commit messages / PRs: no AI-attribution lines.
