@@ -2,7 +2,7 @@ name: Monatliches Daten-Update
 
 on:
   schedule:
-    - cron: '0 6 5 * *'   # 1. des Monats, 06:00 UTC
+    - cron: '0 6 5 * *'   # 5. des Monats, 06:00 UTC (BNetzA publiziert ~Anfang des Monats)
   workflow_dispatch:        # manuell auslösbar über GitHub UI
 
 jobs:
@@ -28,8 +28,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          echo "LAST_UPDATED = \"$(date +%Y-%m)\"" > 01_app/_data_version.py
           git add 02_data/03_computed_data/combined_ladestation_ladepunkt.parquet 01_app/_data_version.py
-          git diff --staged --quiet || git commit -m "chore: monatliches Daten-Update $(date +%Y-%m)"
+          DATENSTAND=$(grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' 01_app/_data_version.py || date +%Y-%m)
+          git diff --staged --quiet || git commit -m "chore: Daten-Update Datenstand $DATENSTAND"
           git pull --rebase origin main
           git push

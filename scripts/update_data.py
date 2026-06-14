@@ -8,6 +8,7 @@ from pathlib import Path
 DOWNLOAD_PAGE = "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/DownloadundKontakt.html"
 SHAPEFILE = Path("02_data/02_meta_data/vg250_01-01.gk3.shape.ebenen/vg250_ebenen_0101/VG250_KRS.shp")
 OUT_PATH = Path("02_data/03_computed_data/combined_ladestation_ladepunkt.parquet")
+VERSION_PATH = Path("01_app/_data_version.py")
 
 
 def get_xlsx_url() -> str:
@@ -133,6 +134,9 @@ def main():
     print("Suche aktuelle Download-URL...")
     url = get_xlsx_url()
 
+    date_match = re.search(r"(\d{4}-\d{2}-\d{2})", url)
+    datenstand = date_match.group(1) if date_match else None
+
     print("Lade und parse XLSX...")
     df_raw = download_and_parse(url)
 
@@ -146,6 +150,12 @@ def main():
     df.to_parquet(OUT_PATH, index=False)
     print(f"Gespeichert: {OUT_PATH} ({OUT_PATH.stat().st_size / 1e6:.1f} MB)")
     print(f"Fertig: {len(df)} Ladepunkte aus {df['ladestation_id'].nunique()} Stationen")
+
+    if datenstand:
+        VERSION_PATH.write_text(f'LAST_UPDATED = "{datenstand}"\n')
+        print(f"Datenstand: {datenstand} -> {VERSION_PATH}")
+    else:
+        print("Warnung: kein Datenstand im Dateinamen gefunden, _data_version.py unverändert")
 
 
 if __name__ == "__main__":
