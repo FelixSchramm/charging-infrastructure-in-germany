@@ -25,7 +25,11 @@ This project utilizes three main datasets:
 The project follows a clear and professional folder structure for organization and reproducibility:
 ```
 ├── 01_app/
-│   ├── dashboard_no_map.py        # The main Streamlit script (entry point)
+│   ├── app.py                     # Entry point (orchestrates the sections)
+│   ├── config.py                  # Page config, colours, constants
+│   ├── data_loading.py            # Cached data loaders
+│   ├── filters.py                 # Sidebar filters + application
+│   ├── sections/                  # One module per dashboard section
 │   └── _data_version.py           # LAST_UPDATED stamp, bumped by the CI workflows
 ├── 02_data/
 │   ├── 01_original_data/          # Original take-home CSVs from the charging register
@@ -82,4 +86,4 @@ This project uses [**uv**](https://docs.astral.sh/uv/) for dependency management
     `uv sync`
 
 3.  **Start the dashboard:**
-    `uv run streamlit run 01_app/dashboard_no_map.py`
+    `uv run streamlit run 01_app/app.py`

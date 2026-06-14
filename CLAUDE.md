@@ -12,12 +12,16 @@ Streamlit dashboard visualizing Germany's public charging infrastructure
 
 ## Run
 ```bash
-uv run streamlit run 01_app/dashboard_no_map.py
+uv run streamlit run 01_app/app.py
 ```
-(Entry point is `dashboard_no_map.py`, despite the `_no_map` suffix.)
 
 ## Layout
-- `01_app/dashboard_no_map.py` — the Streamlit app (single file).
+- `01_app/app.py` — schlanker Entry-Point, orchestriert nur die Abschnitte.
+- `01_app/config.py` — Seiteneinstellung, Farben, Konstanten.
+- `01_app/data_loading.py` — Loader (mit `@st.cache_data`).
+- `01_app/filters.py` — Seitenleisten-Filter + Anwendung auf die Daten.
+- `01_app/sections/` — je ein Modul pro Abschnitt (header, kpis, timeseries,
+  analyses, map_view, info).
 - `01_app/_data_version.py` — `LAST_UPDATED` stamp; imported by the app so a
   data commit forces a Streamlit Cloud redeploy. Overwritten by the CI workflows.
 - `scripts/update_data.py` — downloads BNetzA xlsx, writes the parquet.
