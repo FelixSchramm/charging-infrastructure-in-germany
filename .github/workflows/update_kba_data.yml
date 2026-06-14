@@ -2,7 +2,7 @@ name: Jährliches KBA-Daten-Update
 
 on:
   schedule:
-    - cron: '0 6 1 5 *'   # 1. Mai, 06:00 UTC (KBA veröffentlicht neue Daten ca. April/Mai)
+    - cron: '0 6 5 5 *'   # 1. Mai, 06:00 UTC (KBA veröffentlicht neue Daten ca. April/Mai)
   workflow_dispatch:        # manuell auslösbar über GitHub UI
 
 jobs:

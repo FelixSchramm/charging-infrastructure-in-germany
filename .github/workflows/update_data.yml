@@ -2,7 +2,7 @@ name: Monatliches Daten-Update
 
 on:
   schedule:
-    - cron: '0 6 1 * *'   # 1. des Monats, 06:00 UTC
+    - cron: '0 6 5 * *'   # 1. des Monats, 06:00 UTC
   workflow_dispatch:        # manuell auslösbar über GitHub UI
 
 jobs:

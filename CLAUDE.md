@@ -14,7 +14,7 @@ Streamlit dashboard visualizing Germany's public charging infrastructure
 ```bash
 uv run streamlit run 01_app/dashboard_no_map.py
 ```
-(Entry point is `dashboard_no_map.py` — the README still says `dashboard.py`, which is stale.)
+(Entry point is `dashboard_no_map.py`, despite the `_no_map` suffix.)
 
 ## Layout
 - `01_app/dashboard_no_map.py` — the Streamlit app (single file).
