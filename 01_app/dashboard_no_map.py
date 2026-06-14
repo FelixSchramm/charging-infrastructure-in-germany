@@ -6,6 +6,14 @@ import folium
 from streamlit_folium import st_folium
 from pathlib import Path
 
+# Wird vom monatlichen GitHub-Action-Update überschrieben. Der Import zwingt
+# Streamlit Cloud bei jedem Daten-Commit zu einem Redeploy (sonst bleibt der
+# laufende Prozess auf den alten, im Container zwischengespeicherten Daten).
+try:
+    from _data_version import LAST_UPDATED
+except ImportError:
+    LAST_UPDATED = "lokal"
+
 # --- SEITENKONFIGURATION & FARBPALETTE ---
 st.set_page_config(
     page_title="Ladeinfrastruktur in Deutschland | NOW GmbH",
@@ -23,7 +31,7 @@ LEISTUNGS_COLORS = {
 }
 
 # --- DATEN LADEN & VORBEREITEN ---
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_data():
     try:
         df = pd.read_parquet('02_data/03_computed_data/combined_ladestation_ladepunkt.parquet')
@@ -42,7 +50,7 @@ def load_data():
         st.error("FEHLER: Die Datei 'combined_ladestation_ladepunkt.parquet' wurde nicht gefunden. Bitte überprüfe den Pfad.")
         return None
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_geodata():
     try:
         project_root = Path(__file__).parent.parent
@@ -57,7 +65,7 @@ def load_geodata():
     except Exception:
         return None
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load_kba_data():
     try:
         project_root = Path(__file__).parent.parent
@@ -112,7 +120,8 @@ if df is not None:
         kba_stand = "–"
     st.markdown(
         f'<p style="text-align:left; color:#999; font-size:0.85rem; margin-top:-1rem;">'
-        f'Datenstand: BNetzA: {bnetza_stand} | KBA: {kba_stand}</p>',
+        f'Datenstand: BNetzA: {bnetza_stand} | KBA: {kba_stand} '
+        f'(Update: {LAST_UPDATED})</p>',
         unsafe_allow_html=True
     )
 

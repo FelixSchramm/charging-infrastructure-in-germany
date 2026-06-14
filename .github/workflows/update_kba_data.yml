@@ -28,6 +28,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add 02_data/03_computed_data/kba_ev_bestand.parquet
+          echo "LAST_UPDATED = \"$(date +%Y-%m)\"" > 01_app/_data_version.py
+          git add 02_data/03_computed_data/kba_ev_bestand.parquet 01_app/_data_version.py
           git diff --staged --quiet || git commit -m "chore: jährliches KBA EV-Bestand Update $(date +%Y)"
+          git pull --rebase origin main
           git push
