@@ -56,6 +56,13 @@ The pipeline ([`.github/workflows/update_data.yml`](.github/workflows/update_dat
 
 The workflow can also be triggered manually via **GitHub Actions → Run workflow**.
 
+> **Note — data is committed into the repo (tech-debt to revisit).**
+> The pipeline commits the resulting `.parquet` files (~7 MB charging data, ~14 KB KBA data) directly into Git and pushes them. This is intentional and pragmatic for now: the files are small, updates are infrequent (monthly/yearly), and Streamlit Community Cloud reads them straight from the repo checkout — no external storage, secrets, or cost.
+>
+> The trade-off is that every monthly version stays in the Git history forever, so the repo (and every clone/CI run) grows over time. It's not a problem at the current size, but if the data grows larger or the history gets heavy, move the data out of Git. Best effort/value for this setup: **GitHub Releases** (app loads the `.parquet` via URL) or **Git LFS**; for larger/more frequent data, an external bucket (S3/R2/Supabase Storage) loaded at runtime.
+>
+> **Possible future step — DuckDB on a bucket.** Once the data lives in a bucket, [DuckDB](https://duckdb.org/) (free, open-source, runs in-process — no server or account) can query the remote `.parquet` directly via SQL without downloading the whole file, e.g. `SELECT Bundesland, COUNT(*) FROM 'https://bucket/…​.parquet' GROUP BY Bundesland`. It can also `JOIN` the BNetzA and KBA files in one query. Overkill at the current ~7 MB (pandas is fine), but a clean, serverless, zero-cost upgrade if the data is moved out of Git. The hosted variant **MotherDuck** has a free tier but adds an account/token — not needed for this project's size.
+
 ## How to Run the Project
 
 To run the dashboard locally, follow these steps:
