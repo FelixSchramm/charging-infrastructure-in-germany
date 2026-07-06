@@ -38,11 +38,11 @@ if df is not None:
 
     tab_ueberblick, tab_zeit, tab_betreiber, tab_regional, tab_info = st.tabs(
         [
-            "📊 Überblick",
-            "📈 Zeitverlauf",
-            "🏢 Betreiber & Typen",
-            "🗺️ Regional",
-            "ℹ️ Info & Quellen",
+            "Überblick",
+            "Zeitverlauf",
+            "Betreiber & Typen",
+            "Regional",
+            "Info & Quellen",
         ]
     )
 
