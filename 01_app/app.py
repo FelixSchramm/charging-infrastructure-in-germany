@@ -24,7 +24,6 @@ from sections import (
     render_info,
     render_kpis,
     render_map,
-    render_timeseries,
 )
 
 # Mehr Abstand zwischen den Tab-Beschriftungen, solange die Breite reicht.
@@ -38,29 +37,33 @@ df, gdf_districts, df_kba = load_all()
 
 if df is not None:
     filters = render_sidebar(df)
-    df_filtered = apply_filters(df, filters)
 
     # Titel und Datenstand bleiben ueber den Tabs immer sichtbar.
     render_header(df, df_kba)
 
-    st.markdown(_TAB_STYLE, unsafe_allow_html=True)
-    tab_ueberblick, tab_zeit, tab_betreiber, tab_regional, tab_info = st.tabs(
-        [
-            "Überblick",
-            "Zeitverlauf",
-            "Analysen",
-            "Landkreise",
-            "Hinweise",
-        ]
-    )
+    if not filters.bundeslaender or not filters.leistungstypen:
+        st.warning(
+            "Bitte wähle mindestens ein Bundesland und einen Leistungstyp in der "
+            "Seitenleiste aus, um die Auswertungen anzuzeigen."
+        )
+    else:
+        df_filtered = apply_filters(df, filters)
 
-    with tab_ueberblick:
-        render_kpis(df_filtered)
-    with tab_zeit:
-        render_timeseries(df_filtered)
-    with tab_betreiber:
-        render_analyses(df_filtered)
-    with tab_regional:
-        render_map(df, gdf_districts, df_kba, filters)
-    with tab_info:
-        render_info(df, df_kba)
+        st.markdown(_TAB_STYLE, unsafe_allow_html=True)
+        tab_ueberblick, tab_betreiber, tab_regional, tab_info = st.tabs(
+            [
+                "Überblick",
+                "Analysen",
+                "Landkreise",
+                "Hinweise",
+            ]
+        )
+
+        with tab_ueberblick:
+            render_kpis(df_filtered)
+        with tab_betreiber:
+            render_analyses(df_filtered)
+        with tab_regional:
+            render_map(df, gdf_districts, df_kba, filters)
+        with tab_info:
+            render_info(df, df_kba)
