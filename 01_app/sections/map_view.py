@@ -32,7 +32,6 @@ _TOOLTIP_STYLE = f"""
 
 def render_map(df: pd.DataFrame, gdf_districts, df_kba, f: Filters):
     """Zeichnet die Choropleth-Karte (gesamtdeutsch, alle Filter außer Bundesland)."""
-    st.divider()
     st.header("Regionale Analyse")
     st.caption(
         "Die Karte zeigt den gesamtdeutschen Bestand auf Kreisebene "

@@ -14,6 +14,8 @@ from config import configure_page
 # Muss vor jedem anderen Streamlit-Aufruf stehen.
 configure_page()
 
+import streamlit as st
+
 from data_loading import load_all
 from filters import apply_filters, render_sidebar
 from sections import (
@@ -31,9 +33,26 @@ if df is not None:
     filters = render_sidebar(df)
     df_filtered = apply_filters(df, filters)
 
+    # Titel und Datenstand bleiben ueber den Tabs immer sichtbar.
     render_header(df, df_kba)
-    render_kpis(df_filtered)
-    render_timeseries(df_filtered)
-    render_analyses(df_filtered)
-    render_map(df, gdf_districts, df_kba, filters)
-    render_info(df, df_kba)
+
+    tab_ueberblick, tab_zeit, tab_betreiber, tab_regional, tab_info = st.tabs(
+        [
+            "📊 Überblick",
+            "📈 Zeitverlauf",
+            "🏢 Betreiber & Typen",
+            "🗺️ Regional",
+            "ℹ️ Info & Quellen",
+        ]
+    )
+
+    with tab_ueberblick:
+        render_kpis(df_filtered)
+    with tab_zeit:
+        render_timeseries(df_filtered)
+    with tab_betreiber:
+        render_analyses(df_filtered)
+    with tab_regional:
+        render_map(df, gdf_districts, df_kba, filters)
+    with tab_info:
+        render_info(df, df_kba)
