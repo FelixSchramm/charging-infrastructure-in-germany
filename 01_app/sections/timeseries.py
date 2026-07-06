@@ -9,7 +9,6 @@ from config import CHART_START_YEAR, LEISTUNGS_COLORS, NOW_DUNKELBLAU
 
 def render_timeseries(df_filtered: pd.DataFrame):
     """Zeichnet die vier Zeitreihen-Charts (2x2-Raster)."""
-    st.divider()
     st.header("Entwicklung über die Zeit")
 
     zubau_gesamt, kat_basis = _build_basis(df_filtered)

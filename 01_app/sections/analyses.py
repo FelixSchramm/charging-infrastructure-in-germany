@@ -9,7 +9,6 @@ from config import LEISTUNGS_COLORS, NOW_GRUEN
 
 def render_analyses(df_filtered: pd.DataFrame):
     """Zeichnet die beiden Detail-Charts nebeneinander."""
-    st.divider()
     st.header("Detaillierte Analysen")
 
     col1, col2 = st.columns(2)

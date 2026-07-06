@@ -18,7 +18,6 @@ Dieses Dashboard bietet einen umfassenden Überblick über den **Bestand** der �
 
 def render_info(df: pd.DataFrame, df_kba):
     """Zeichnet die Abschnitte Limitationen und Quellen."""
-    st.divider()
     st.header("Limitationen")
     st.markdown(_LIMITATIONEN)
 
