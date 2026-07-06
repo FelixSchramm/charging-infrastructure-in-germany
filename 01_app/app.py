@@ -20,6 +20,7 @@ from data_loading import load_all
 from filters import apply_filters, render_sidebar
 from sections import (
     render_analyses,
+    render_data_table,
     render_header,
     render_info,
     render_kpis,
@@ -50,11 +51,12 @@ if df is not None:
         df_filtered = apply_filters(df, filters)
 
         st.markdown(_TAB_STYLE, unsafe_allow_html=True)
-        tab_ueberblick, tab_betreiber, tab_regional, tab_info = st.tabs(
+        tab_ueberblick, tab_betreiber, tab_regional, tab_daten, tab_info = st.tabs(
             [
                 "Überblick",
                 "Analysen",
                 "Landkreise",
+                "Daten",
                 "Hinweise",
             ]
         )
@@ -65,5 +67,7 @@ if df is not None:
             render_analyses(df_filtered)
         with tab_regional:
             render_map(df, gdf_districts, df_kba, filters)
+        with tab_daten:
+            render_data_table(df_filtered)
         with tab_info:
             render_info(df, df_kba)
