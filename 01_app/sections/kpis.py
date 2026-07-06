@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from config import HPC_THRESHOLD_KW
+from sections.timeseries import render_zubau_charts
 
 _METRIC_LABEL_STYLE = """
     <style>
@@ -31,3 +32,6 @@ def render_kpis(df_filtered: pd.DataFrame):
     )
     gesamtleistung_gw = df_stationen["InstallierteLadeleistungNLL"].sum() / 1_000_000
     col4.metric("Gesamtleistung", f"{gesamtleistung_gw:.2f} GW".replace(".", ","))
+
+    st.header("Jährlicher Zubau")
+    render_zubau_charts(df_filtered)

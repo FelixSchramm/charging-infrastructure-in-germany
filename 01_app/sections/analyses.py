@@ -5,10 +5,14 @@ import plotly.express as px
 import streamlit as st
 
 from config import LEISTUNGS_COLORS, NOW_GRUEN
+from sections.timeseries import render_kumulativ_charts
 
 
 def render_analyses(df_filtered: pd.DataFrame):
-    """Zeichnet die beiden Detail-Charts nebeneinander."""
+    """Zeichnet die Zeitreihen-Analysen sowie die beiden Detail-Charts."""
+    st.header("Entwicklung über die Zeit")
+    render_kumulativ_charts(df_filtered)
+
     st.header("Detaillierte Analysen")
 
     col1, col2 = st.columns(2)

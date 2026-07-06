@@ -7,13 +7,10 @@ import streamlit as st
 from config import CHART_START_YEAR, LEISTUNGS_COLORS, NOW_DUNKELBLAU
 
 
-def render_timeseries(df_filtered: pd.DataFrame):
-    """Zeichnet die vier Zeitreihen-Charts (2x2-Raster)."""
-    st.header("Entwicklung über die Zeit")
-
+def render_zubau_charts(df_filtered: pd.DataFrame):
+    """Zeichnet die beiden Überblick-Charts zum jährlichen Zubau."""
     zubau_gesamt, kat_basis = _build_basis(df_filtered)
 
-    # ERSTE REIHE: Jährlicher Zubau
     col1, col2 = st.columns(2)
     with col1:
         fig = px.bar(
@@ -33,9 +30,13 @@ def render_timeseries(df_filtered: pd.DataFrame):
         fig.update_layout(bargap=0.2, legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
         st.plotly_chart(fig, use_container_width=True, key="fig_zubau_kat")
 
-    # ZWEITE REIHE: Kumulative Entwicklung
-    col3, col4 = st.columns(2)
-    with col3:
+
+def render_kumulativ_charts(df_filtered: pd.DataFrame):
+    """Zeichnet die beiden Analyse-Charts zum kumulativen Bestand."""
+    zubau_gesamt, kat_basis = _build_basis(df_filtered)
+
+    col1, col2 = st.columns(2)
+    with col1:
         cumulative_gesamt = _cumulative_gesamt(df_filtered, zubau_gesamt)
         fig = px.bar(
             cumulative_gesamt, x="Jahr", y="Anzahl",
@@ -45,7 +46,7 @@ def render_timeseries(df_filtered: pd.DataFrame):
         fig.update_layout(bargap=0.2)
         st.plotly_chart(fig, use_container_width=True, key="fig_cum_gesamt")
 
-    with col4:
+    with col2:
         kat_kumulativ = _cumulative_kat(df_filtered, kat_basis)
         fig = px.bar(
             kat_kumulativ, x="Jahr", y="Anzahl", color="Leistungskategorie",
