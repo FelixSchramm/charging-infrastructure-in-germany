@@ -27,6 +27,13 @@ from sections import (
     render_timeseries,
 )
 
+# Mehr Abstand zwischen den Tab-Beschriftungen, solange die Breite reicht.
+_TAB_STYLE = """
+    <style>
+    .stTabs [data-baseweb="tab-list"] { gap: 2.5rem; }
+    </style>
+"""
+
 df, gdf_districts, df_kba = load_all()
 
 if df is not None:
@@ -36,13 +43,14 @@ if df is not None:
     # Titel und Datenstand bleiben ueber den Tabs immer sichtbar.
     render_header(df, df_kba)
 
+    st.markdown(_TAB_STYLE, unsafe_allow_html=True)
     tab_ueberblick, tab_zeit, tab_betreiber, tab_regional, tab_info = st.tabs(
         [
             "Überblick",
             "Zeitverlauf",
-            "Betreiber & Typen",
-            "Regional",
-            "Info & Quellen",
+            "Analysen",
+            "Landkreise",
+            "Hinweise",
         ]
     )
 
