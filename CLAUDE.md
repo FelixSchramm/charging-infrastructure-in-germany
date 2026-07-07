@@ -42,3 +42,43 @@ uv run streamlit run 01_app/app.py
   `pd.read_parquet('02_data/03_computed_data/…')`.
 - `@st.cache_data(ttl=3600)` on the loaders — refreshes hourly.
 - Commit messages / PRs: no AI-attribution lines.
+# AI Coding Instructions
+
+## General Coding Standards
+- Write code in English, as easy as possible and do not use emojis.
+- Follow PEP 8 coding style for Python
+- Variable and function names: use snake_case
+- Use reStructuredText (reST) format for all Python docstrings.
+- Format: Use `:param name: description` and `:return: description`.
+- Python code needs to be formatted with `black`
+- sql files needs to be formatted with `sqlfluff` using the "standard" style.
+- sql is used with AWS Athena and Redshift, so ensure compatibility with these systems.
+
+
+## Commit & Branching Conventions
+- Use conventional commits (https://www.conventionalcommits.org/)
+- Branch names must include Jira ticket numbers: Format "NLL-XXX-description"
+- Always work with feature branches
+- Pull requests must include:
+  * Description with data source, background, request/results links
+  * Complexity level
+  * Priority/Urgency
+
+## Documentation Requirements
+- Every code needs a Markdown file
+- Every function needs a docstring
+- Inline comments: Focus on WHY, not WHAT
+
+## Plans
+- Implementierungs-/Ausführpläne werden **immer** im Ordner `plans/` abgelegt.
+- `plans/` ist in `.gitignore` und wird **nicht** ins Repo committet (nur lokal).
+- Dateiname-Format: `YYYY-MM-DD_name.md` (aktuelles Datum + kurzer Slug),
+  z. B. `2026-06-25_api-anbindung.md`.
+
+# Project Structure & Organization
+- Repositories are structured by: Acquisition, ETL, Data Service, or Analysis
+- Data process follows CRISP-DM methodology
+
+## SQL Views:
+- On DWH-Redshift: automatic deployment via CI/CD on dwh-application repository
+- On Athena: manual execution
