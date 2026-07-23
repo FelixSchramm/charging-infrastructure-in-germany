@@ -17,7 +17,7 @@ configure_page()
 import streamlit as st
 
 from data_loading import load_all
-from filters import apply_filters, render_sidebar
+from filters import apply_filters, render_result_count, render_sidebar
 from sections import (
     render_analyses,
     render_data_table,
@@ -49,6 +49,7 @@ if df is not None:
         )
     else:
         df_filtered = apply_filters(df, filters)
+        render_result_count(df, df_filtered)
 
         st.markdown(_TAB_STYLE, unsafe_allow_html=True)
         tab_ueberblick, tab_betreiber, tab_regional, tab_daten, tab_info = st.tabs(
