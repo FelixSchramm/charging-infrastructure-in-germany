@@ -5,8 +5,19 @@ from dataclasses import dataclass
 import pandas as pd
 import streamlit as st
 
+from config import LEISTUNGS_KATEGORIEN
+
 # Auswahlwert der Kreis-Auswahl, der "kein Filter" bedeutet.
 KREIS_ALLE = "(alle)"
+
+# session_state-Keys der Filter-Widgets; der Reset-Button entfernt genau diese.
+_FILTER_KEYS = (
+    "flt_jahre",
+    "flt_bundesland",
+    "flt_leistung",
+    "flt_kreis",
+    "flt_betreiber",
+)
 
 
 @dataclass
@@ -24,12 +35,20 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
     """Zeichnet die Filter-Seitenleiste und gibt die gewählten Werte zurück."""
     st.sidebar.header("Filteroptionen")
 
+    # Setzt alle Filter auf ihre Startwerte zurueck, indem die Widget-Keys aus
+    # dem session_state entfernt werden; der rerun zeichnet sie mit Defaults neu.
+    if st.sidebar.button("Filter zurücksetzen", use_container_width=True):
+        for key in _FILTER_KEYS:
+            st.session_state.pop(key, None)
+        st.rerun()
+
     min_jahr, max_jahr = int(df["Jahr"].min()), int(df["Jahr"].max())
     selected_jahre = st.sidebar.slider(
         "Zeitraum (Jahr):",
         min_value=min_jahr,
         max_value=max_jahr,
         value=(min_jahr, max_jahr),
+        key="flt_jahre",
     )
 
     # Leere Auswahl bedeutet bewusst "alle": so startet das Widget aufgeräumt
@@ -41,12 +60,20 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
         default=[],
         placeholder="Alle Bundesländer",
         help="Leer lassen = alle Bundesländer. Tippe zum Suchen, um einzelne auszuwählen.",
+        key="flt_bundesland",
     )
     effektive_bundeslaender = selected_bundeslaender or bundeslaender
 
-    leistungstypen = sorted(df["Leistungskategorie"].unique())
-    selected_leistungstypen = st.sidebar.multiselect(
-        "Leistungstyp:", options=leistungstypen, default=leistungstypen
+    # Feste Reihenfolge (nach Leistung, absteigend) statt alphabetisch; pills sind
+    # bei nur drei Kategorien scanbarer als ein Multiselect.
+    vorhandene_leistungstypen = set(df["Leistungskategorie"].unique())
+    leistungstypen = [k for k in LEISTUNGS_KATEGORIEN if k in vorhandene_leistungstypen]
+    selected_leistungstypen = st.sidebar.pills(
+        "Leistungstyp:",
+        options=leistungstypen,
+        selection_mode="multi",
+        default=leistungstypen,
+        key="flt_leistung",
     )
 
     # selectbox/multiselect sind durchsuchbare Comboboxen: Tippen filtert die
@@ -57,6 +84,7 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
         options=[KREIS_ALLE, *kreise],
         index=0,
         help="Tippe zum Suchen (z. B. 'Mün' für München/Münster).",
+        key="flt_kreis",
     )
 
     betreiber = sorted(
@@ -68,6 +96,7 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
         default=[],
         placeholder="Betreiber suchen…",
         help="Leer lassen = alle Betreiber. Tippe die ersten Buchstaben für Vorschläge.",
+        key="flt_betreiber",
     )
 
     return Filters(
@@ -76,6 +105,19 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
         leistungstypen=selected_leistungstypen,
         kreis=None if selected_kreis == KREIS_ALLE else selected_kreis,
         betreiber=selected_betreiber,
+    )
+
+
+def _format_de(n: int) -> str:
+    """Formatiert eine ganze Zahl mit Punkt als Tausendertrennzeichen (de-DE)."""
+    return f"{n:,}".replace(",", ".")
+
+
+def render_result_count(df: pd.DataFrame, df_filtered: pd.DataFrame) -> None:
+    """Zeigt in der Seitenleiste, wie viele Ladepunkte die Filter aktuell treffen."""
+    st.sidebar.divider()
+    st.sidebar.caption(
+        f"**{_format_de(len(df_filtered))}** von {_format_de(len(df))} Ladepunkten"
     )
 
 
