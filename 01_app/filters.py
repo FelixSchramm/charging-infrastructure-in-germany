@@ -130,6 +130,14 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
         options=leistungstypen,
         selection_mode="multi",
         default=leistungstypen,
+        # Nur den Namen auf dem Button zeigen (ohne kW); die Schwellen erklaert der Hilfe-Tooltip.
+        format_func=lambda kategorie: kategorie.split(" (")[0],
+        help=(
+            "Einteilung nach Ladeleistung:\n\n"
+            "- **HPC-Laden**: ab 150 kW\n"
+            "- **Schnellladen**: über 22 kW\n"
+            "- **Normalladen**: bis 22 kW"
+        ),
         key="flt_leistung",
     )
 
@@ -140,7 +148,7 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
         "Betreiber:",
         options=betreiber,
         default=[],
-        placeholder="Betreiber suchen…",
+        placeholder="Alle Betreiber",
         help="Leer lassen = alle Betreiber. Tippe die ersten Buchstaben für Vorschläge.",
         key="flt_betreiber",
     )
