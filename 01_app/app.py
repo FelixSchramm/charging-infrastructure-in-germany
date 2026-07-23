@@ -51,24 +51,31 @@ if df is not None:
         df_filtered = apply_filters(df, filters)
         render_result_count(df, df_filtered)
 
-        st.markdown(_TAB_STYLE, unsafe_allow_html=True)
-        tab_ueberblick, tab_betreiber, tab_regional, tab_daten, tab_info = st.tabs(
-            [
-                "Überblick",
-                "Analysen",
-                "Landkreise",
-                "Daten",
-                "Hinweise",
-            ]
-        )
+        if df_filtered.empty:
+            st.warning(
+                "Für die aktuelle Filterauswahl gibt es keine Ladepunkte. "
+                "Bitte passe die Filter an – zum Beispiel Bundesland, Landkreis/Stadt "
+                "oder Betreiber, die nicht zusammenpassen."
+            )
+        else:
+            st.markdown(_TAB_STYLE, unsafe_allow_html=True)
+            tab_ueberblick, tab_betreiber, tab_regional, tab_daten, tab_info = st.tabs(
+                [
+                    "Überblick",
+                    "Analysen",
+                    "Landkreise",
+                    "Daten",
+                    "Hinweise",
+                ]
+            )
 
-        with tab_ueberblick:
-            render_kpis(df_filtered)
-        with tab_betreiber:
-            render_analyses(df_filtered)
-        with tab_regional:
-            render_map(df, gdf_districts, df_kba, filters)
-        with tab_daten:
-            render_data_table(df_filtered)
-        with tab_info:
-            render_info(df, df_kba)
+            with tab_ueberblick:
+                render_kpis(df_filtered)
+            with tab_betreiber:
+                render_analyses(df_filtered)
+            with tab_regional:
+                render_map(df, gdf_districts, df_kba, filters)
+            with tab_daten:
+                render_data_table(df_filtered)
+            with tab_info:
+                render_info(df, df_kba)
