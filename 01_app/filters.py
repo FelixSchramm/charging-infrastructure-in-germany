@@ -5,6 +5,9 @@ from dataclasses import dataclass
 import pandas as pd
 import streamlit as st
 
+# Auswahlwert der Kreis-Auswahl, der "kein Filter" bedeutet.
+KREIS_ALLE = "(alle)"
+
 
 @dataclass
 class Filters:
@@ -13,8 +16,8 @@ class Filters:
     jahre: tuple[int, int]
     bundeslaender: list[str]
     leistungstypen: list[str]
-    search_kreis: str
-    search_betreiber: str
+    kreis: str | None
+    betreiber: list[str]
 
 
 def render_sidebar(df: pd.DataFrame) -> Filters:
@@ -23,28 +26,56 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
 
     min_jahr, max_jahr = int(df["Jahr"].min()), int(df["Jahr"].max())
     selected_jahre = st.sidebar.slider(
-        "Zeitraum (Jahr):", min_value=min_jahr, max_value=max_jahr, value=(min_jahr, max_jahr)
+        "Zeitraum (Jahr):",
+        min_value=min_jahr,
+        max_value=max_jahr,
+        value=(min_jahr, max_jahr),
     )
 
+    # Leere Auswahl bedeutet bewusst "alle": so startet das Widget aufgeräumt
+    # (statt mit 16 Chips) und ein einzelnes Land ist ein Klick statt 15 Abwahlen.
     bundeslaender = sorted(df["Bundesland"].unique())
     selected_bundeslaender = st.sidebar.multiselect(
-        "Bundesland:", options=bundeslaender, default=bundeslaender
+        "Bundesland:",
+        options=bundeslaender,
+        default=[],
+        placeholder="Alle Bundesländer",
+        help="Leer lassen = alle Bundesländer. Tippe zum Suchen, um einzelne auszuwählen.",
     )
+    effektive_bundeslaender = selected_bundeslaender or bundeslaender
 
     leistungstypen = sorted(df["Leistungskategorie"].unique())
     selected_leistungstypen = st.sidebar.multiselect(
         "Leistungstyp:", options=leistungstypen, default=leistungstypen
     )
 
-    search_kreis = st.sidebar.text_input("Landkreis/Stadt (Suche):", "").lower()
-    search_betreiber = st.sidebar.text_input("Betreiber (Suche):", "").lower()
+    # selectbox/multiselect sind durchsuchbare Comboboxen: Tippen filtert die
+    # echten Werte als Vorschläge, ohne die Seitenleiste mit langen Listen zu füllen.
+    kreise = sorted(df["KreisKreisfreieStadt"].dropna().unique())
+    selected_kreis = st.sidebar.selectbox(
+        "Landkreis/Stadt:",
+        options=[KREIS_ALLE, *kreise],
+        index=0,
+        help="Tippe zum Suchen (z. B. 'Mün' für München/Münster).",
+    )
+
+    betreiber = sorted(
+        {b.strip() for b in df["BetreiberBereinigt"].dropna() if b.strip()}
+    )
+    selected_betreiber = st.sidebar.multiselect(
+        "Betreiber:",
+        options=betreiber,
+        default=[],
+        placeholder="Betreiber suchen…",
+        help="Leer lassen = alle Betreiber. Tippe die ersten Buchstaben für Vorschläge.",
+    )
 
     return Filters(
         jahre=selected_jahre,
-        bundeslaender=selected_bundeslaender,
+        bundeslaender=effektive_bundeslaender,
         leistungstypen=selected_leistungstypen,
-        search_kreis=search_kreis,
-        search_betreiber=search_betreiber,
+        kreis=None if selected_kreis == KREIS_ALLE else selected_kreis,
+        betreiber=selected_betreiber,
     )
 
 
@@ -56,7 +87,7 @@ def apply_filters(df: pd.DataFrame, f: Filters) -> pd.DataFrame:
         & (df["Jahr"] <= f.jahre[1])
         & (df["Leistungskategorie"].isin(f.leistungstypen))
     ]
-    return _apply_search(df_filtered, f)
+    return _apply_selection(df_filtered, f)
 
 
 def apply_filters_for_map(df: pd.DataFrame, f: Filters) -> pd.DataFrame:
@@ -66,13 +97,13 @@ def apply_filters_for_map(df: pd.DataFrame, f: Filters) -> pd.DataFrame:
         & (df["Jahr"] <= f.jahre[1])
         & (df["Leistungskategorie"].isin(f.leistungstypen))
     ]
-    return _apply_search(df_filtered, f)
+    return _apply_selection(df_filtered, f)
 
 
-def _apply_search(df: pd.DataFrame, f: Filters) -> pd.DataFrame:
-    """Wendet die Text-Suchfelder (Kreis, Betreiber) an."""
-    if f.search_kreis:
-        df = df[df["KreisKreisfreieStadt"].str.lower().str.contains(f.search_kreis, na=False)]
-    if f.search_betreiber:
-        df = df[df["BetreiberBereinigt"].str.lower().str.contains(f.search_betreiber, na=False)]
+def _apply_selection(df: pd.DataFrame, f: Filters) -> pd.DataFrame:
+    """Wendet die Auswahl aus Kreis- und Betreiber-Combobox an."""
+    if f.kreis:
+        df = df[df["KreisKreisfreieStadt"] == f.kreis]
+    if f.betreiber:
+        df = df[df["BetreiberBereinigt"].str.strip().isin(f.betreiber)]
     return df
