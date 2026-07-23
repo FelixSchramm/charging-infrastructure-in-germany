@@ -42,10 +42,10 @@ if df is not None:
     # Titel und Datenstand bleiben ueber den Tabs immer sichtbar.
     render_header(df, df_kba)
 
-    if not filters.bundeslaender or not filters.leistungstypen:
+    if not filters.leistungstypen:
         st.warning(
-            "Bitte wähle mindestens ein Bundesland und einen Leistungstyp in der "
-            "Seitenleiste aus, um die Auswertungen anzuzeigen."
+            "Bitte wähle mindestens einen Leistungstyp in der Seitenleiste aus, "
+            "um die Auswertungen anzuzeigen."
         )
     else:
         df_filtered = apply_filters(df, filters)
