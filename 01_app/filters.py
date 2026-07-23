@@ -7,9 +7,6 @@ import streamlit as st
 
 from config import LEISTUNGS_KATEGORIEN
 
-# Auswahlwert der Kreis-Auswahl, der "kein Filter" bedeutet.
-KREIS_ALLE = "(alle)"
-
 # session_state-Keys der Filter-Widgets; der Reset-Button entfernt genau diese.
 _FILTER_KEYS = (
     "flt_jahre",
@@ -27,7 +24,7 @@ class Filters:
     jahre: tuple[int, int]
     bundeslaender: list[str]
     leistungstypen: list[str]
-    kreis: str | None
+    kreise: list[str]
     betreiber: list[str]
 
 
@@ -100,14 +97,25 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
     )
     effektive_bundeslaender = selected_bundeslaender or bundeslaender
 
-    # selectbox/multiselect sind durchsuchbare Comboboxen: Tippen filtert die
-    # echten Werte als Vorschläge, ohne die Seitenleiste mit langen Listen zu füllen.
-    kreise = sorted(df["KreisKreisfreieStadt"].dropna().unique())
-    selected_kreis = st.sidebar.selectbox(
+    # Kreis-Optionen auf die gewählten Bundesländer einschränken, damit keine
+    # unmögliche Kombination (z. B. Bayern + ein NRW-Kreis) wählbar ist.
+    kreise_optionen = sorted(
+        df.loc[df["Bundesland"].isin(effektive_bundeslaender), "KreisKreisfreieStadt"]
+        .dropna()
+        .unique()
+    )
+    # Eine bereits getroffene Auswahl bereinigen, falls sie durch eine geänderte
+    # Bundesland-Auswahl nicht mehr zu den Optionen passt (verhindert Streamlit-Fehler).
+    if "flt_kreis" in st.session_state:
+        st.session_state["flt_kreis"] = [
+            k for k in st.session_state["flt_kreis"] if k in kreise_optionen
+        ]
+    # Kein default=, damit die manuelle session_state-Bereinigung keine Warnung wirft.
+    selected_kreise = st.sidebar.multiselect(
         "Landkreis/Stadt:",
-        options=[KREIS_ALLE, *kreise],
-        index=0,
-        help="Tippe zum Suchen (z. B. 'Mün' für München/Münster).",
+        options=kreise_optionen,
+        placeholder="Alle Landkreise/Städte",
+        help="Leer lassen = alle. Zeigt nur Kreise der gewählten Bundesländer.",
         key="flt_kreis",
     )
 
@@ -141,7 +149,7 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
         jahre=selected_jahre,
         bundeslaender=effektive_bundeslaender,
         leistungstypen=selected_leistungstypen,
-        kreis=None if selected_kreis == KREIS_ALLE else selected_kreis,
+        kreise=selected_kreise,
         betreiber=selected_betreiber,
     )
 
@@ -182,8 +190,8 @@ def apply_filters_for_map(df: pd.DataFrame, f: Filters) -> pd.DataFrame:
 
 def _apply_selection(df: pd.DataFrame, f: Filters) -> pd.DataFrame:
     """Wendet die Auswahl aus Kreis- und Betreiber-Combobox an."""
-    if f.kreis:
-        df = df[df["KreisKreisfreieStadt"] == f.kreis]
+    if f.kreise:
+        df = df[df["KreisKreisfreieStadt"].isin(f.kreise)]
     if f.betreiber:
         df = df[df["BetreiberBereinigt"].str.strip().isin(f.betreiber)]
     return df
