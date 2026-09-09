@@ -5,7 +5,7 @@ das Skript tut, sondern *warum* es so gebaut ist, und benennt die allgemeinen
 Muster dahinter — gedacht zum Nachlesen und Lernen, nicht als Referenz.
 
 Der Ausführplan mit der Entscheidungshistorie liegt in
-`plans/2026-06-26_offizielle-api-implementierung.md`. Dieses Dokument beschreibt
+`plans/umgesetzt/2026-06-26_offizielle-api-implementierung.md`. Dieses Dokument beschreibt
 den Stand, wie er implementiert ist.
 
 ---

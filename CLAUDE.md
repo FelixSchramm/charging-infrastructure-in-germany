@@ -80,6 +80,9 @@ uv run streamlit run 01_app/app.py
 - `plans/` ist **nicht** in `.gitignore` und wird ins Repo committet (nicht nur lokal).
 - Dateiname-Format: `YYYY-MM-DD_name.md` (aktuelles Datum + kurzer Slug),
   z. B. `2026-06-25_api-anbindung.md`.
+- Vollständig umgesetzte Pläne wandern nach `plans/umgesetzt/` (mit kurzem
+  Status-Header oben im Dokument); offene und nur teilweise umgesetzte Pläne
+  bleiben direkt in `plans/`.
 
 # Behavioral Guidelines
 
