@@ -50,7 +50,7 @@ the write pattern matches [data-model.md](data-model.md).
 
 | Dataset | raw/ | curated/ | serving/ | Notes |
 | --- | --- | --- | --- | --- |
-| `charging_points` | [ ] | [ ] | [ ] | daily API integration currently tracked separately — see note below |
+| `charging_points` | [ ] | [ ] | [ ] | daily BNetzA API fetch live since 2026-08 (parquet-in-Git, not R2) — see note below |
 | `sessions` | [ ] | [ ] | [ ] | blocked on OQ-2 |
 | `truck_charging` | [ ] | [ ] | [ ] | |
 | `weather` | [ ] | [ ] | [ ] | |
@@ -80,8 +80,10 @@ the write pattern matches [data-model.md](data-model.md).
 
 ## Related, separate workstream
 
-[plans/2026-06-26_offizielle-api-implementierung.md](../plans/2026-06-26_offizielle-api-implementierung.md)
-integrates the daily BNetzA REST API but — as currently written — still writes to the *existing*
-parquet-in-Git pipeline, not to R2. Treat it as a stepping stone: once it is live, its output
-becomes the `fetch` step feeding the `charging_points` row in Phase 2 above, not a separate
-finish line.
+[plans/umgesetzt/2026-06-26_offizielle-api-implementierung.md](../plans/umgesetzt/2026-06-26_offizielle-api-implementierung.md)
+integrates the daily BNetzA REST API but still writes to the *existing* parquet-in-Git pipeline,
+not to R2. It went live in 2026-08 (`scripts/update_data_official.py`, daily cron in
+`.github/workflows/update_data_api.yml`) and now provides the `fetch` step feeding the
+`charging_points` row in Phase 2 above. The `raw/`/`curated/`/`serving/` boxes there stay
+unchecked: they track the R2 write pattern from [data-model.md](data-model.md), which this
+pipeline does not yet implement.

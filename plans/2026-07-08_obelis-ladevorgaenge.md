@@ -1,5 +1,12 @@
 # OBELIS Ladevorgänge (Nutzungsdaten) ins Dashboard integrieren
 
+> **Status (2026-09-09): teilweise umgesetzt.** Das Verarbeitungsskript
+> `scripts/process_obelis_ladevorgaenge.py` ist fertig und `duckdb` ist
+> Dependency. Offen ist die komplette Dashboard-Integration: das Aggregat-Parquet
+> wurde noch nie erzeugt, es gibt kein `load_obelis_usage()`, kein
+> `01_app/sections/usage.py` und keinen Tab "Nutzung". Deshalb bleibt dieser Plan
+> im offenen Ordner.
+
 ## Quelle
 - Mobilithek-Angebot: https://mobilithek.info/offers/714073450865197056
 - Metadaten (bereits geladen und geprüft): https://d1269bxe5ubfat.cloudfront.net/obelisoe/metaData/OBELISoeffentlich_ladevorgaenge_Metadaten.xlsx

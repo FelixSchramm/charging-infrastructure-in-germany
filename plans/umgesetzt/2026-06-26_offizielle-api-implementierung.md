@@ -1,5 +1,13 @@
 # Ausführplan: Offizielle BNetzA-Tages-API anbinden
 
+> **Status (2026-09-09): umgesetzt.** Produktiv seit dem täglichen Cron-Lauf
+> (`.github/workflows/update_data_api.yml`, 07:20 UTC); die Daten-Commits laufen
+> seither ohne Lücke. Umgesetzt in `scripts/update_data_official.py` (inkl.
+> `MIN_RECORDS`-, Plausibilitäts- und NaT-Guards) und dokumentiert in
+> `scripts/update_data_official.md`. Restpunkte aus Abschnitt 7 sind als
+> GitHub-Issue nachgezogen: Entscheidung über die XLSX-Pipeline
+> (`scripts/update_data.py` läuft weiterhin monatlich als Fallback).
+
 > **Bezug zur Zielarchitektur:** Dieser Plan schreibt aktuell noch in die bestehende
 > Parquet-in-Git-Pipeline, nicht nach R2 (siehe `ARCHITECTURE.md` / ADR 0001). Sobald dieser
 > Plan produktiv läuft, in
