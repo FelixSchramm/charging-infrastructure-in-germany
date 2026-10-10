@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (worker session: #33 PR #46 opened)
+**Last updated:** 2026-10-10 (reviewer session: #33 PR #46 reviewed, merge blocked)
 **Chain status:** running
 
 ## Done
@@ -20,14 +20,19 @@ Update after every completed unit of work and before every handover.
 ## In progress
 
 - Issue **#33** (Streamlit prototype, custom theme): PR #46
-  (`issue-33-streamlit-theme` -> `agents/ui-prototypes`), state: **review
-  pending**. Reference KPIs (a) and (b) verified with `AppTest`, server start
-  verified with `curl`, screenshots taken with headless Chromium and committed
-  to `screenshots/` in the prototype folder (reviewer decides whether they stay).
+  (`issue-33-streamlit-theme` -> `agents/ui-prototypes`), state: **reviewed,
+  merge pending user approval**. Review posted (COMMENT): KPIs (a)/(b) and the
+  empty-selection hint re-verified with `AppTest`, black clean. Reviewer fix
+  pushed (4ccf954: dropped default `[server] port`). Screenshots stay in the
+  prototype folder. Open note (not implemented): `chartCategoricalColors` has
+  no effect because both Plotly charts use `theme=None`; kept because the issue
+  asks to show the option. The merge via GitHub API was denied by the auto-mode
+  classifier ("Merge Without Review").
 
 ## Next step
 
-- Reviewer: review PR #46, merge, close #33. Then worker for **#34** (Dash).
+- User: approve the merge of PR #46 (or merge it yourself), then a reviewer
+  session closes #33, archives the handover and spawns the worker for **#34** (Dash).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
