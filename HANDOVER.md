@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (reviewer session: #30 PR #45 merged)
+**Last updated:** 2026-10-10 (worker session: #33 PR #46 opened)
 **Chain status:** running
 
 ## Done
@@ -19,12 +19,15 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. No open PR.
+- Issue **#33** (Streamlit prototype, custom theme): PR #46
+  (`issue-33-streamlit-theme` -> `agents/ui-prototypes`), state: **review
+  pending**. Reference KPIs (a) and (b) verified with `AppTest`, server start
+  verified with `curl`, screenshots taken with headless Chromium and committed
+  to `screenshots/` in the prototype folder (reviewer decides whether they stay).
 
 ## Next step
 
-- Worker: implement issue **#33** (Überblick-Entwurf mit Streamlit, eigenes
-  Theme) on `issue-33-<slug>`, open the PR against `agents/ui-prototypes`.
+- Reviewer: review PR #46, merge, close #33. Then worker for **#34** (Dash).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -49,6 +52,11 @@ Update after every completed unit of work and before every handover.
   `issue-32-shared-data-prep` could not be deleted; the user can delete it.
   Same for `issue-30-streamlit-ui-fixes` (2026-10-10: "Write access to this
   GitHub API path is not permitted through this proxy.", HTTP 403).
+- Headless Chromium works for screenshots:
+  `uv run --no-project --with playwright python shot.py` with
+  `executable_path="/opt/pw-browsers/chromium"`.
+- `pkill -f "streamlit run"` inside a compound Bash command kills the shell
+  itself (pattern matches the command line); run it as a separate call.
 - Auto mode blocks reviewer merges started without a human message ("Self-Approval").
   The user must approve in chat or add a permission rule.
 
