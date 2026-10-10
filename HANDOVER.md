@@ -39,6 +39,8 @@ Update after every completed unit of work and before every handover.
 
 ## Open questions / decisions taken
 
+- User decision (2026-10-10): screenshots stay in the repo, in the
+  prototype's `screenshots/` folder.
 - The work plan is **#32, #30, #33, #34, #35, #36, #39, #38, #37, #42, #40,
   #41, #43** in that order (see CLAUDE.md, "Work plan"). Prototypes with light
   Python installs come first, those with heavy installs or builds last.
