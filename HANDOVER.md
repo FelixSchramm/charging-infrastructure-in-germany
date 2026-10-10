@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (reviewer session: #33 merged, next #34)
+**Last updated:** 2026-10-10 (worker session: PR #47 for #34 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -25,11 +25,14 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- none
+- Issue **#34** (Dash + Dash Mantine Components): PR #47 from `issue-34-dash`
+  into `agents/ui-prototypes`, state: **review pending**. Dash 4.4.1 + DMC
+  2.8.0. KPIs (a) and (b) verified with Playwright against `prepare_data.py`;
+  empty type selection shows the hint; screenshots in `screenshots/`.
 
 ## Next step
 
-- Worker: implement **#34** (Dash) on `issue-34-<slug>`, open the PR, spawn the reviewer.
+- Reviewer: review and merge PR #47 (#34), then worker for **#35** (Shiny).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -56,6 +59,9 @@ Update after every completed unit of work and before every handover.
   `issue-32-shared-data-prep` could not be deleted; the user can delete it.
   Same for `issue-30-streamlit-ui-fixes` (2026-10-10: "Write access to this
   GitHub API path is not permitted through this proxy.", HTTP 403).
+- Dash prototype: `AppShellHeader` has a fixed height; it is set per
+  breakpoint (`{"base": 124, "sm": 88}`) so the wrapped title fits at 390 px.
+  Stacked Plotly bars list the legend reversed unless `traceorder="normal"`.
 - Headless Chromium works for screenshots:
   `uv run --no-project --with playwright python shot.py` with
   `executable_path="/opt/pw-browsers/chromium"`.
