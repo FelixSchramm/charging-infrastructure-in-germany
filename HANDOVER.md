@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (reviewer session: PR #47 for #34 merged)
+**Last updated:** 2026-10-10 (worker session: PR #48 for #35 opened)
 **Chain status:** running
 
 ## Done
@@ -31,11 +31,14 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. Next worker starts **#35** (Shiny).
+- Issue **#35** (Shiny for Python, Express): PR #48 from `issue-35-shiny`,
+  state: **review pending**. KPIs (a) and (b) and the empty-selection hint
+  verified in headless Chromium (Playwright). Visual check needs a local run.
 
 ## Next step
 
-- Worker: implement **#35** (Shiny), open the PR, spawn the reviewer.
+- Reviewer: review PR #48, merge, close #35, then spawn the worker for **#36**
+  (Panel).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -75,6 +78,13 @@ Update after every completed unit of work and before every handover.
   ("Merge Without Review"). The github MCP tool `merge_pull_request` (after
   posting the review) worked for PR #47. If a merge is blocked, do not work
   around it: record "merge pending" here and ask the user to merge on GitHub.
+
+- Shiny Express renders every top-level string into the page, including a
+  module docstring; use a comment header instead. Plotly widgets re-render
+  slowly in headless Chromium: wait ~10 s after a filter change before reading
+  values in a Playwright check (fast clicks are not lost, just delayed).
+  bslib puts the sidebar below the content on phones; no `open=` option
+  changes that.
 
 - `_shared/.sqlfluff` sets `max_line_length = 100`; black is run with `-l 100`.
   `prepare_data.py` is the shared data entry point, run it first in any session
