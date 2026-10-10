@@ -129,12 +129,13 @@ def content(selected_state: str, keys: list[str]) -> pn.viewable.Viewable:
     )
     matching = rows[rows[[f"has_{k}" for k in keys]].any(axis=1)]
     lp_columns = [f"lp_{k}" for k in keys]
+    stations = matching["stationen"].sum()
     points = rows[lp_columns].to_numpy().sum()
     hpc_points = rows["lp_hpc"].sum() if "hpc" in keys else 0
     gigawatt = matching["kw"].sum() / 1_000_000
     yearly = rows[rows["jahr"] >= 2010].groupby("jahr")[lp_columns].sum()
     kpis = pn.FlexBox(
-        kpi("Ladestationen", matching["stationen"].sum(), german_int(matching["stationen"].sum())),
+        kpi("Ladestationen", stations, german_int(stations)),
         kpi("Ladepunkte", points, german_int(points)),
         kpi("HPC-Ladepunkte", hpc_points, german_int(hpc_points)),
         kpi("Gesamtleistung", gigawatt, f"{gigawatt:.2f} GW".replace(".", ",")),
