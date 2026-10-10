@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (reviewer session: #32 merged)
+**Last updated:** 2026-10-10 (worker session: #30 PR #45 opened)
 **Chain status:** running
 
 ## Done
@@ -15,12 +15,16 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- (nothing)
+- Issue **#30**: PR #45 (`issue-30-streamlit-ui-fixes`), state: **review pending**.
+  Checklist "Aufgaben" implemented. Visual check (map watermark, legend,
+  sidebar buttons) still needs a local run of the Streamlit app.
 
 ## Next step
 
-- Start issue **#30** (UI fixes in the Streamlit app; only the "Aufgaben"
-  checklist). Then #33, #34, ... as in the work plan.
+- Reviewer: review + merge PR #45, close #30. Then worker for #33.
+- Findings for the user from "Zu prüfen" (not implemented): year slider starts
+  at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the annual
+  chart; KBA parquet still at report date 2024.04, source seems stale.
 
 ## Open questions / decisions taken
 
