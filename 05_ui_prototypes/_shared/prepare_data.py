@@ -4,6 +4,7 @@ Run: ``uv run python 05_ui_prototypes/_shared/prepare_data.py``
 """
 
 from pathlib import Path
+from runpy import run_path
 
 import duckdb
 
@@ -13,13 +14,11 @@ DATA_DIR = SHARED_DIR / "data"
 
 
 def read_last_updated() -> str:
-    """Read ``LAST_UPDATED`` from ``01_app/_data_version.py`` without importing it.
+    """Read ``LAST_UPDATED`` from ``01_app/_data_version.py`` without importing the app.
 
     :return: the update stamp, e.g. ``2026-10-10``
     """
-    namespace = {}
-    exec((REPO_ROOT / "01_app/_data_version.py").read_text(), namespace)
-    return namespace["LAST_UPDATED"]
+    return run_path(str(REPO_ROOT / "01_app/_data_version.py"))["LAST_UPDATED"]
 
 
 def kpis(overview, bundesland=None, types=("hpc", "schnell", "normal")):
@@ -49,17 +48,12 @@ def main() -> None:
     # SQL paths are relative to the repo root, so the script works from any cwd.
     con = duckdb.connect(config={"file_search_path": str(REPO_ROOT)})
 
-    for name in ("overview", "meta"):
-        sql = (SHARED_DIR / f"{name}.sql").read_text()
-        out = DATA_DIR / f"{name}.csv"
-        con.execute(f"COPY ({sql}) TO '{out}' (HEADER, DELIMITER ',')")
-
-    meta = DATA_DIR / "meta.csv"
-    con.execute(
-        f"COPY (SELECT *, '{read_last_updated()}' AS update FROM read_csv('{meta}', all_varchar=true)) "
-        f"TO '{meta}.tmp' (HEADER, DELIMITER ',')"
+    overview_sql = (SHARED_DIR / "overview.sql").read_text()
+    meta_sql = (SHARED_DIR / "meta.sql").read_text()
+    con.sql(overview_sql).write_csv(str(DATA_DIR / "overview.csv"))
+    con.sql(meta_sql).project(f"*, '{read_last_updated()}' AS update").write_csv(
+        str(DATA_DIR / "meta.csv")
     )
-    Path(f"{meta}.tmp").replace(meta)
 
     overview = con.read_csv(str(DATA_DIR / "overview.csv"))
     print("Reference KPIs (no filter):", kpis(overview))
