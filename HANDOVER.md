@@ -4,8 +4,8 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (setup session — no issue work started yet)
-**Chain status:** starting — first worker session triggered on 2026-10-10
+**Last updated:** 2026-10-10 (worker session for #32 finished)
+**Chain status:** running
 
 ## Done
 
@@ -15,13 +15,13 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- (nothing)
+- Issue **#32**: PR **#44** (`issue-32-shared-data-prep` -> `agents/ui-prototypes`),
+  state: **review pending**. Reference KPIs verified against pandas logic
+  (documented in the PR). Reviewer: merge, close #32 manually, then next is #30.
 
 ## Next step
 
-- Start with issue **#32 — feat(ui-prototypes): gemeinsame Datenaufbereitung
-  mit DuckDB-SQL**. Read the issue in full first. It is the prerequisite for
-  all prototype issues #33-#43.
+- Review and merge PR #44 (issue #32), then start issue **#30**.
 
 ## Open questions / decisions taken
 
@@ -38,6 +38,10 @@ Update after every completed unit of work and before every handover.
   needs a local run.
 
 ## Known pitfalls
+
+- `_shared/.sqlfluff` sets `max_line_length = 100`; black is run with `-l 100`.
+  `prepare_data.py` is the shared data entry point, run it first in any session
+  that needs the CSVs.
 
 - Never force-push `agents/ui-prototypes`.
 - Issue PRs target the integration branch, not `main` — GitHub's `Closes #N`
