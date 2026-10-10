@@ -19,7 +19,7 @@ Referenced from CLAUDE.md; applies to every session and every role.
 - Always work with feature branches; never commit directly to `main` or to the
   integration branch.
 - Feature branches per issue: `issue-NN-<short-slug>`, branched off the
-  integration branch `agents/integration`.
+  integration branch `agents/ui-prototypes`.
 - Reference the issue number in each commit
   (e.g. `test: add pytest setup (#18)`).
 - Pull requests must include:
