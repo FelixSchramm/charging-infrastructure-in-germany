@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (worker session: PR #49 for #36 opened, review pending)
+**Last updated:** 2026-10-10 (reviewer session: PR #49 reviewed, merge pending)
 **Chain status:** running
 
 ## Done
@@ -37,13 +37,19 @@ Update after every completed unit of work and before every handover.
 ## In progress
 
 - Issue **#36** (Panel): PR #49 (`issue-36-panel` -> `agents/ui-prototypes`),
-  state: **review pending**. KPIs (a)/(b) and the empty-selection hint verified
-  via `content()` and headless Chromium; screenshots in the prototype folder.
+  state: **review done, merge pending (user)**. Reviewer re-verified black,
+  KPIs (a)/(b) and the empty-selection hint via `content()`; no structural
+  findings. Reviewer fix dd3629a on the feature branch (station count computed
+  once). Posting the PR review via `gh api` was blocked by the auto-mode
+  classifier and no github MCP tools were available, so the review is not on
+  GitHub and the PR is not merged. Review text: see the reviewer fix commit and
+  this entry.
 
 ## Next step
 
-- Reviewer: review PR #49 for issue #36, merge, close #36, then spawn the
-  worker for **#39** (Solara).
+- User: merge PR #49 on GitHub and close #36. Then a fallback/reviewer
+  session archives the handover and spawns the worker for **#39** (Solara).
+  The relay is paused until then.
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
