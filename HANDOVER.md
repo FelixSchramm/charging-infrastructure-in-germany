@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (reviewer session: PR #48 merged, #35 closed)
+**Last updated:** 2026-10-10 (worker session: PR #49 for #36 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -36,12 +36,14 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. Next worker starts issue **#36** (Panel).
+- Issue **#36** (Panel): PR #49 (`issue-36-panel` -> `agents/ui-prototypes`),
+  state: **review pending**. KPIs (a)/(b) and the empty-selection hint verified
+  via `content()` and headless Chromium; screenshots in the prototype folder.
 
 ## Next step
 
-- Worker: implement issue **#36** (Panel) on `issue-36-panel`, open the PR,
-  then spawn the reviewer.
+- Reviewer: review PR #49 for issue #36, merge, close #36, then spawn the
+  worker for **#39** (Solara).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -89,6 +91,11 @@ Update after every completed unit of work and before every handover.
   values in a Playwright check (fast clicks are not lost, just delayed).
   bslib puts the sidebar below the content on phones; no `open=` option
   changes that.
+
+- Panel prototype: `FastListTemplate`'s sidebar does not collapse on phones,
+  so the filters sit in the main area. `panel serve` caches the script; restart
+  the server after editing `app.py`. Panel content lives in shadow DOM: use
+  Playwright locators (`get_by_text`), not `inner_text("body")`.
 
 - `_shared/.sqlfluff` sets `max_line_length = 100`; black is run with `-l 100`.
   `prepare_data.py` is the shared data entry point, run it first in any session
