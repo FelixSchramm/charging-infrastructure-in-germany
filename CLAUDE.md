@@ -33,6 +33,8 @@ uv run streamlit run 01_app/app.py
   JSON API, same output schema. Run daily by `update_data_api.yml`.
   Explained in `scripts/update_data_official.md`.
 - `scripts/update_kba_data.py` — updates the KBA EV-stock parquet.
+- `05_ui_prototypes/` — frontend prototypes for the Overview page (#31); `_shared/`
+  builds the common CSV data with DuckDB SQL. See its README.
 - `02_data/03_computed_data/combined_ladestation_ladepunkt.parquet` — main data (~7 MB).
 - `02_data/03_computed_data/kba_ev_bestand.parquet` — KBA EV stock.
 - `02_data/02_meta_data/…/VG250_KRS.shp` — district shapefile for spatial join.

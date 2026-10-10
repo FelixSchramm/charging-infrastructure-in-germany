@@ -10,8 +10,8 @@ Referenced from CLAUDE.md; applies to every session and every role.
 - Use reStructuredText (reST) format for all Python docstrings.
 - Format: Use `:param name: description` and `:return: description`.
 - Python code needs to be formatted with `black`
-- sql files needs to be formatted with `sqlfluff` using the "standard" style.
-- sql is used with AWS Athena and Redshift, so ensure compatibility with these systems.
+- SQL files use the DuckDB dialect, formatted with
+  `uvx sqlfluff format --dialect duckdb <file>`.
 
 
 ## Commit & Branching Conventions
