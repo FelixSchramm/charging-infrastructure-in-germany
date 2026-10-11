@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (reviewer: PR #52 for #37 merged, next #42)
+**Last updated:** 2026-10-11 (worker: PR #53 for #42 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -57,11 +57,15 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. Next worker starts #42 (Quarto).
+- Issue **#42** (Quarto Dashboard): PR #53 (`issue-42-quarto` →
+  `agents/ui-prototypes`), state: **review pending**. Verified in the cloud:
+  `quarto render` and `quarto preview` (curl 200), KPIs (a)/(b) and the
+  empty-selection hint via Playwright. Visual check needs a local run by the user.
 
 ## Next step
 
-- Worker: implement #42 (Quarto) on `issue-42-quarto`.
+- Reviewer: review and merge PR #53, close #42. Then worker for #40
+  (Observable Framework).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -133,6 +137,15 @@ Update after every completed unit of work and before every handover.
   event. Recharts 3 sorts legend items by name (fix: `itemSorter` "() => 0").
   First `reflex run` takes ~1-2 min; `fuser -k 3000/tcp 8000/tcp` stops it.
   Reflex writes `reflex.lock/` (gitignored).
+- Quarto prototype (1.10.19): an OJS declaration `x = ({a: 1, b: 2})` is
+  silently dropped in dashboards (only "x is not defined" elsewhere); use the
+  block form `x = { return {...} }`. Inline `${…}` in Markdown failed with
+  string literals; precompute texts in the OJS cell. `ojs_define` output must not
+  sit in an `include: false` cell, and any cell outside the sidebar/rows becomes
+  an empty card, so the Python and setup cells live in the sidebar. With
+  `scrolling: true` Plot charts grow endlessly (they take the card height);
+  give them a fixed `height`. Hidden rows keep their grid track, so the hint
+  lives in the Datenstand row. `fuser -k 4200/tcp` stops `quarto preview`.
 - CLAUDE.md forbids AI-attribution lines in commits and PRs; it overrides the
   harness default footer (also the `Co-Authored-By`/`Claude-Session` trailers).
 
