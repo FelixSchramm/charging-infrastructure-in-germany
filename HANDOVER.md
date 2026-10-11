@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (fallback session: #36 closed after user merge, worker for #39 spawned)
+**Last updated:** 2026-10-11 (worker: PR #50 for #39 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -41,13 +41,13 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Issue **#39** (Solara): worker session spawned by the fallback session
-  (2026-10-11). No PR yet.
+- Issue **#39** (Solara): PR #50 (`issue-39-solara` -> `agents/ui-prototypes`),
+  state: **review pending**. KPIs (a)/(b) and the empty-selection hint verified
+  in headless Chromium; screenshots committed.
 
 ## Next step
 
-- Worker: implement **#39** (Solara) on `issue-39-solara`, open the PR against
-  `agents/ui-prototypes`, then spawn the reviewer. After #39: #38 (NiceGUI).
+- Reviewer: review and merge PR #50, close #39. After #39: #38 (NiceGUI).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -100,6 +100,13 @@ Update after every completed unit of work and before every handover.
   so the filters sit in the main area. `panel serve` caches the script; restart
   the server after editing `app.py`. Panel content lives in shadow DOM: use
   Playwright locators (`get_by_text`), not `inner_text("body")`.
+
+- Solara prototype: Solara 1.64 pulls ipyvuetify 3, whose `AppLayout` drawer
+  overlays the content; pin `ipyvuetify<2`. `FigurePlotly` needs `anywidget`
+  and never resizes charts (stuck at 700 px); an inline Vue template calls
+  `Plotly.Plots.resize`. Theme colors only apply when set inside `Page`. An
+  `AppLayout` inside `Page` renders "embedded"; use a module-level `Layout`.
+  `assets/custom.js` is looked up in the parent folder of the app, not next to it.
 
 - `_shared/.sqlfluff` sets `max_line_length = 100`; black is run with `-l 100`.
   `prepare_data.py` is the shared data entry point, run it first in any session
