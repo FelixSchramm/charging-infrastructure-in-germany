@@ -63,6 +63,9 @@ Update after every completed unit of work and before every handover.
 ## In progress
 
 - Nothing. Next worker starts issue **#40** (Observable Framework).
+- The #42 reviewer could not spawn the #40 worker: `create_session` refused
+  with "lineage depth 8 (limit 8)". The relay waits for the user or the
+  hourly fallback routine (fires after >12h without a commit).
 
 ## Next step
 
@@ -88,6 +91,10 @@ Update after every completed unit of work and before every handover.
   needs a local run.
 
 ## Known pitfalls
+
+- Session lineage is capped at depth 8: a session at depth 8 cannot
+  `create_session` or create triggers. The chain then needs a fresh start by
+  the user or the fallback routine.
 
 - The proxy blocks `DELETE` on git refs, so the remote branch
   `issue-32-shared-data-prep` could not be deleted; the user can delete it.
