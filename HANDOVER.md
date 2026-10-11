@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (worker: PR #53 for #42 opened, review pending)
+**Last updated:** 2026-10-11 (reviewer: PR #53 merged, #42 closed, next #40)
 **Chain status:** running
 
 ## Done
@@ -55,17 +55,18 @@ Update after every completed unit of work and before every handover.
   `rx.cond(legend, ...)` on a Python bool could be a plain Python conditional.
   Visual check needs a local run by the user.
 
+- Issue **#42** (Quarto Dashboard): PR #53 reviewed (COMMENT, no findings;
+  `quarto render` and reference KPIs (a)/(b) from `prepare_data.py`
+  re-verified), merged by the reviewer (merge commit e2a59be), issue closed.
+  Visual check needs a local run by the user.
+
 ## In progress
 
-- Issue **#42** (Quarto Dashboard): PR #53 (`issue-42-quarto` →
-  `agents/ui-prototypes`), state: **review pending**. Verified in the cloud:
-  `quarto render` and `quarto preview` (curl 200), KPIs (a)/(b) and the
-  empty-selection hint via Playwright. Visual check needs a local run by the user.
+- Nothing. Next worker starts issue **#40** (Observable Framework).
 
 ## Next step
 
-- Reviewer: review and merge PR #53, close #42. Then worker for #40
-  (Observable Framework).
+- Worker: implement #40 (Observable Framework), then #41, #43.
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -93,7 +94,7 @@ Update after every completed unit of work and before every handover.
   Same for `issue-30-streamlit-ui-fixes` (2026-10-10: "Write access to this
   GitHub API path is not permitted through this proxy.", HTTP 403).
   Same for `issue-34-dash`, `issue-35-shiny`, `issue-39-solara`,
-  `issue-38-nicegui` and `issue-37-reflex` (git push
+  `issue-38-nicegui`, `issue-37-reflex` and `issue-42-quarto` (git push
   --delete: "remote end hung up" / no effect).
 - Dash prototype: `AppShellHeader` has a fixed height; it is set per
   breakpoint (`{"base": 124, "sm": 88}`) so the wrapped title fits at 390 px.
