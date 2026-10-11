@@ -1,0 +1,7 @@
+solara==1.64.0
+# ipyvuetify 3 (Vuetify 3) breaks the AppLayout drawer: it overlays the content.
+ipyvuetify<2
+# FigurePlotly renders plotly figures as anywidget widgets.
+anywidget
+plotly
+pandas
