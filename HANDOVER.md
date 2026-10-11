@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (reviewer: PR #51 merged, #38 closed)
+**Last updated:** 2026-10-11 (worker: PR #52 for #37 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -50,11 +50,13 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. Next worker starts issue **#37** (Reflex).
+- Issue **#37** (Reflex): PR #52 (`issue-37-reflex`), state: **review pending**.
+  KPIs (a)/(b) and the empty-selection hint verified via Playwright; server
+  start + `curl` 200; screenshots in `screenshots/`.
 
 ## Next step
 
-- Worker: implement #37 (Reflex). After #37: #42 (Quarto).
+- Reviewer: review and merge PR #52 (#37). Then worker: #42 (Quarto).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -119,6 +121,13 @@ Update after every completed unit of work and before every handover.
 - NiceGUI prototype: ECharts JS formatters need a leading `:` on the option key
   (`":formatter"`). Without `grid.containLabel` and `legend.type = "scroll"` the
   stacked chart's legend overlaps the axis. `fuser -k 8080/tcp` stops the server.
+- Reflex prototype (0.10): theme goes into `rxconfig.py` via
+  `rx.plugins.RadixThemesPlugin` (`App(theme=...)` is deprecated); disable
+  `SitemapPlugin` to silence warnings. Radix layout props use `spacing="4"`,
+  not `gap="4"` (that becomes invalid CSS). `rx.checkbox_group` has no change
+  event. Recharts 3 sorts legend items by name (fix: `itemSorter` "() => 0").
+  First `reflex run` takes ~1-2 min; `fuser -k 3000/tcp 8000/tcp` stops it.
+  Reflex writes `reflex.lock/` (gitignored).
 - CLAUDE.md forbids AI-attribution lines in commits and PRs; it overrides the
   harness default footer (also the `Co-Authored-By`/`Claude-Session` trailers).
 
