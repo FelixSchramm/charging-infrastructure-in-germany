@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (reviewer: PR #55 merged, #41 closed; next: worker for #43)
+**Last updated:** 2026-10-11 (fallback worker: PR #56 for #43 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -72,12 +72,17 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. Next issue: **#43** (React + Vite), the last one of the work plan.
+- Issue **#43** (React + Vite): PR #56 (`issue-43-react`), **review pending**.
+  Implemented by a fallback session (the #41 reviewer merged PR #55 but got
+  stuck on the permission prompt for spawning the worker). `npm run build`
+  exit 0; KPIs (a) 118.216 / 222.868 / 42.505 / 9,27 GW and (b) Bayern HPC
+  4.594 / 7.954 / 7.954 / 1,25 GW and the empty-selection hint verified via
+  Playwright on `vite preview`.
 
 ## Next step
 
-- Worker: implement #43 (React + Vite), open the PR, spawn the reviewer. After
-  its merge the relay is complete (see CLAUDE.md, "Completion").
+- Reviewer: review PR #56 for #43, merge, close #43. After its merge the
+  relay is complete (see CLAUDE.md, "Completion").
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -170,6 +175,13 @@ Update after every completed unit of work and before every handover.
   reuse next to it: compute selection flags in a CTE. In dev the query
   viewers always show; `neverShowQueries` only hides them in the build.
   Read tool may show a stale image for an overwritten PNG path; copy first.
+- React prototype: Vite serves `public/` as-is, so `copy_data.js` copies the
+  CSVs there (`predev`/`prebuild`). `vite.config.js` uses `base: "./"` so
+  `dist/` works from any path. Do not parse `meta.csv` with `d3-dsv` `autoType`
+  (the ISO update date becomes a `Date`). Node Playwright is global:
+  `require("$(npm root -g)/playwright")`.
+- Session spawns can stall on a permission prompt ("Create S…") in auto mode;
+  the fallback routine then restarts the chain after 0,5 h without commits.
 - CLAUDE.md forbids AI-attribution lines in commits and PRs; it overrides the
   harness default footer (also the `Co-Authored-By`/`Claude-Session` trailers).
 
