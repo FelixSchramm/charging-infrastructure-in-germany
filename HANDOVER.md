@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-10 (reviewer session: PR #49 reviewed, merge pending)
+**Last updated:** 2026-10-11 (fallback session: #36 closed after user merge, worker for #39 spawned)
 **Chain status:** running
 
 ## Done
@@ -34,22 +34,20 @@ Update after every completed unit of work and before every handover.
   the reviewer (merge commit 80dbda5), issue closed. Visual check needs a local
   run by the user.
 
+- Issue **#36** (Panel): PR #49 reviewed (no structural findings; reviewer fix
+  dd3629a computes the station count once), merged by the user (merge commit
+  86abdba), issue closed by the fallback session. The review was never posted
+  on GitHub (`gh api` was blocked). Visual check needs a local run by the user.
+
 ## In progress
 
-- Issue **#36** (Panel): PR #49 (`issue-36-panel` -> `agents/ui-prototypes`),
-  state: **review done, merge pending (user)**. Reviewer re-verified black,
-  KPIs (a)/(b) and the empty-selection hint via `content()`; no structural
-  findings. Reviewer fix dd3629a on the feature branch (station count computed
-  once). Posting the PR review via `gh api` was blocked by the auto-mode
-  classifier and no github MCP tools were available, so the review is not on
-  GitHub and the PR is not merged. Review text: see the reviewer fix commit and
-  this entry.
+- Issue **#39** (Solara): worker session spawned by the fallback session
+  (2026-10-11). No PR yet.
 
 ## Next step
 
-- User: merge PR #49 on GitHub and close #36. Then a fallback/reviewer
-  session archives the handover and spawns the worker for **#39** (Solara).
-  The relay is paused until then.
+- Worker: implement **#39** (Solara) on `issue-39-solara`, open the PR against
+  `agents/ui-prototypes`, then spawn the reviewer. After #39: #38 (NiceGUI).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
