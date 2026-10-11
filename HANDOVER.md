@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (reviewer: PR #50 merged, #39 closed, next #38)
+**Last updated:** 2026-10-11 (worker: PR #51 for #38 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -45,11 +45,15 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. No open PR.
+- Issue **#38** (NiceGUI): PR #51 (`issue-38-nicegui` -> `agents/ui-prototypes`),
+  state: **review pending**. Verified in the cloud: server start + `curl` 200,
+  KPIs (a)/(b) read from the page via Playwright match `prepare_data.py`, empty
+  type selection shows the hint. Screenshots committed; visual check needs a
+  local run by the user.
 
 ## Next step
 
-- Worker: implement issue **#38** (NiceGUI). After #38: #37 (Reflex).
+- Reviewer: review and merge PR #51, close #38. After #38: #37 (Reflex).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -109,6 +113,12 @@ Update after every completed unit of work and before every handover.
   `Plotly.Plots.resize`. Theme colors only apply when set inside `Page`. An
   `AppLayout` inside `Page` renders "embedded"; use a module-level `Layout`.
   `assets/custom.js` is looked up in the parent folder of the app, not next to it.
+
+- NiceGUI prototype: ECharts JS formatters need a leading `:` on the option key
+  (`":formatter"`). Without `grid.containLabel` and `legend.type = "scroll"` the
+  stacked chart's legend overlaps the axis. `fuser -k 8080/tcp` stops the server.
+- CLAUDE.md forbids AI-attribution lines in commits and PRs; it overrides the
+  harness default footer.
 
 - `_shared/.sqlfluff` sets `max_line_length = 100`; black is run with `-l 100`.
   `prepare_data.py` is the shared data entry point, run it first in any session
