@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (reviewer: PR #54 merged, #40 closed; next #41)
+**Last updated:** 2026-10-11 (fallback worker: PR #55 for #41 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -67,11 +67,13 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. Next worker starts issue **#41** (Evidence).
+- Issue **#41** (Evidence): PR #55 (`issue-41-evidence`), **review pending**.
+  Started by the fallback routine: the PR #54 reviewer session hung on a
+  permission prompt for `create_session` and never spawned the #41 worker.
 
 ## Next step
 
-- Worker: implement #41 (Evidence), then #43.
+- Reviewer: review PR #55 (#41), merge, close #41. Then worker for #43.
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -156,6 +158,14 @@ Update after every completed unit of work and before every handover.
   `scrolling: true` Plot charts grow endlessly (they take the card height);
   give them a fixed `height`. Hidden rows keep their grid track, so the hint
   lives in the Datenstand row. `fuser -k 4200/tcp` stops `quarto preview`.
+- Evidence prototype: `npx degit evidence-dev/template` now gives an Evidence
+  Studio project (hosted CLI, login); the open-source version is on the
+  template's `legacy` branch. Needs `overrides.typescript ^5` (TS 7 peer
+  conflict). Chain page queries with `${name}`, not `from name`. An empty
+  multi-select `${inputs.x.value}` is a subquery, and DuckDB rejects alias
+  reuse next to it: compute selection flags in a CTE. In dev the query
+  viewers always show; `neverShowQueries` only hides them in the build.
+  Read tool may show a stale image for an overwritten PNG path; copy first.
 - CLAUDE.md forbids AI-attribution lines in commits and PRs; it overrides the
   harness default footer (also the `Co-Authored-By`/`Claude-Session` trailers).
 
