@@ -4,8 +4,9 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (fallback worker: PR #56 for #43 opened, review pending)
-**Chain status:** running
+**Last updated:** 2026-10-11 (reviewer: PR #56 merged, #43 closed, relay finished)
+**Chain status:** **finished** - all issues of the work plan are done. Do not
+spawn further sessions.
 
 ## Done
 
@@ -70,19 +71,22 @@ Update after every completed unit of work and before every handover.
   the page SQL in DuckDB), merged by the reviewer (merge commit f0ec671), issue
   closed. Visual check needs a local run by the user.
 
+- Issue **#43** (React + Vite): PR #56 reviewed (COMMENT, no findings;
+  `npm ci && npm run build` exit 0, KPIs (a)/(b) re-verified by calling
+  `computeOverview` on the copied CSV), merged by the reviewer (merge commit
+  1078c48), issue closed. Visual check needs a local run by the user.
+
 ## In progress
 
-- Issue **#43** (React + Vite): PR #56 (`issue-43-react`), **review pending**.
-  Implemented by a fallback session (the #41 reviewer merged PR #55 but got
-  stuck on the permission prompt for spawning the worker). `npm run build`
-  exit 0; KPIs (a) 118.216 / 222.868 / 42.505 / 9,27 GW and (b) Bayern HPC
-  4.594 / 7.954 / 7.954 / 1,25 GW and the empty-selection hint verified via
-  Playwright on `vite preview`.
+- Nothing. The relay is complete.
 
 ## Next step
 
-- Reviewer: review PR #56 for #43, merge, close #43. After its merge the
-  relay is complete (see CLAUDE.md, "Completion").
+- User: decide whether to open the PR from `agents/ui-prototypes` to `main`
+  and disable the fallback routine. Then pick the frontend in #31 (visual
+  checks of all prototypes need a local run).
+- Remote feature branches the proxy could not delete (see pitfalls), now also
+  `issue-43-react`, can be deleted by the user.
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -114,7 +118,7 @@ Update after every completed unit of work and before every handover.
   Same for `issue-30-streamlit-ui-fixes` (2026-10-10: "Write access to this
   GitHub API path is not permitted through this proxy.", HTTP 403).
   Same for `issue-34-dash`, `issue-35-shiny`, `issue-39-solara`,
-  `issue-38-nicegui`, `issue-37-reflex`, `issue-42-quarto`, `issue-40-observable` and `issue-41-evidence` (git push
+  `issue-38-nicegui`, `issue-37-reflex`, `issue-42-quarto`, `issue-40-observable`, `issue-41-evidence` and `issue-43-react` (git push
   --delete: "remote end hung up" / no effect).
 - Dash prototype: `AppShellHeader` has a fixed height; it is set per
   breakpoint (`{"base": 124, "sm": 88}`) so the wrapped title fits at 390 px.
