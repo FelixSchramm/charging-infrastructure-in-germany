@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (worker: PR #50 for #39 opened, review pending)
+**Last updated:** 2026-10-11 (reviewer: PR #50 merged, #39 closed, next #38)
 **Chain status:** running
 
 ## Done
@@ -39,15 +39,17 @@ Update after every completed unit of work and before every handover.
   86abdba), issue closed by the fallback session. The review was never posted
   on GitHub (`gh api` was blocked). Visual check needs a local run by the user.
 
+- Issue **#39** (Solara): PR #50 reviewed (COMMENT, no findings; KPIs (a)/(b),
+  server start + `curl` 200 re-verified), merged by the reviewer (merge commit
+  eaecd0c), issue closed. Visual check needs a local run by the user.
+
 ## In progress
 
-- Issue **#39** (Solara): PR #50 (`issue-39-solara` -> `agents/ui-prototypes`),
-  state: **review pending**. KPIs (a)/(b) and the empty-selection hint verified
-  in headless Chromium; screenshots committed.
+- Nothing. No open PR.
 
 ## Next step
 
-- Reviewer: review and merge PR #50, close #39. After #39: #38 (NiceGUI).
+- Worker: implement issue **#38** (NiceGUI). After #38: #37 (Reflex).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -74,8 +76,8 @@ Update after every completed unit of work and before every handover.
   `issue-32-shared-data-prep` could not be deleted; the user can delete it.
   Same for `issue-30-streamlit-ui-fixes` (2026-10-10: "Write access to this
   GitHub API path is not permitted through this proxy.", HTTP 403).
-  Same for `issue-34-dash` and `issue-35-shiny` (git push --delete: "remote
-  end hung up").
+  Same for `issue-34-dash`, `issue-35-shiny` and `issue-39-solara` (git push
+  --delete: "remote end hung up" / no effect).
 - Dash prototype: `AppShellHeader` has a fixed height; it is set per
   breakpoint (`{"base": 124, "sm": 88}`) so the wrapped title fits at 390 px.
   Stacked Plotly bars list the legend reversed unless `traceorder="normal"`.
