@@ -149,4 +149,4 @@ def page() -> None:
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(title="Ladeinfrastruktur in Deutschland", port=8080, reload=False, show=False)
+    ui.run(title="Ladeinfrastruktur in Deutschland", reload=False, show=False)
