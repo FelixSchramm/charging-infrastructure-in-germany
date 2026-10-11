@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (worker: PR #52 for #37 opened, review pending)
+**Last updated:** 2026-10-11 (reviewer: PR #52 for #37 merged, next #42)
 **Chain status:** running
 
 ## Done
@@ -48,15 +48,20 @@ Update after every completed unit of work and before every handover.
   unfiltered KPIs re-verified via Playwright), merged by the reviewer (merge
   commit 44aa212), issue closed. Visual check needs a local run by the user.
 
+- Issue **#37** (Reflex): PR #52 reviewed (COMMENT; KPIs (a)/(b) re-verified by
+  calling `OverviewState.kpis`), reviewer fix 50dea90 (deduped `.gitignore`,
+  screenshots renamed to `desktop.png` / `mobile.png`), merged by the reviewer
+  (merge commit f361b93), issue closed. Non-blocking note, not implemented:
+  `rx.cond(legend, ...)` on a Python bool could be a plain Python conditional.
+  Visual check needs a local run by the user.
+
 ## In progress
 
-- Issue **#37** (Reflex): PR #52 (`issue-37-reflex`), state: **review pending**.
-  KPIs (a)/(b) and the empty-selection hint verified via Playwright; server
-  start + `curl` 200; screenshots in `screenshots/`.
+- Nothing. Next worker starts #42 (Quarto).
 
 ## Next step
 
-- Reviewer: review and merge PR #52 (#37). Then worker: #42 (Quarto).
+- Worker: implement #42 (Quarto) on `issue-42-quarto`.
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -83,8 +88,8 @@ Update after every completed unit of work and before every handover.
   `issue-32-shared-data-prep` could not be deleted; the user can delete it.
   Same for `issue-30-streamlit-ui-fixes` (2026-10-10: "Write access to this
   GitHub API path is not permitted through this proxy.", HTTP 403).
-  Same for `issue-34-dash`, `issue-35-shiny`, `issue-39-solara` and
-  `issue-38-nicegui` (git push
+  Same for `issue-34-dash`, `issue-35-shiny`, `issue-39-solara`,
+  `issue-38-nicegui` and `issue-37-reflex` (git push
   --delete: "remote end hung up" / no effect).
 - Dash prototype: `AppShellHeader` has a fixed height; it is set per
   breakpoint (`{"base": 124, "sm": 88}`) so the wrapped title fits at 390 px.
