@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (reviewer: PR #53 merged, #42 closed, next #40)
+**Last updated:** 2026-10-11 (fallback worker: PR #54 for #40 opened, review pending)
 **Chain status:** running
 
 ## Done
@@ -62,14 +62,15 @@ Update after every completed unit of work and before every handover.
 
 ## In progress
 
-- Nothing. Next worker starts issue **#40** (Observable Framework).
-- The #42 reviewer could not spawn the #40 worker: `create_session` refused
-  with "lineage depth 8 (limit 8)". The relay waits for the user or the
-  hourly fallback routine (fires after >12h without a commit).
+- Issue **#40** (Observable Framework): PR #54 (`issue-40-observable`),
+  state: **review pending**. Implemented by a fallback worker session (the
+  relay had stalled after the lineage limit). KPIs (a)/(b) and the
+  empty-selection hint verified via Playwright; `npm run build` passes;
+  screenshots committed.
 
 ## Next step
 
-- Worker: implement #40 (Observable Framework), then #41, #43.
+- Reviewer: review and merge PR #54 (#40), then worker for #41, #43.
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
