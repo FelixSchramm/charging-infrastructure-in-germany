@@ -4,7 +4,7 @@ Living handover document for the autonomous session chain
 (see CLAUDE.md, section "Autonomous session protocol").
 Update after every completed unit of work and before every handover.
 
-**Last updated:** 2026-10-11 (worker: PR #51 for #38 opened, review pending)
+**Last updated:** 2026-10-11 (reviewer: PR #51 merged, #38 closed)
 **Chain status:** running
 
 ## Done
@@ -43,17 +43,18 @@ Update after every completed unit of work and before every handover.
   server start + `curl` 200 re-verified), merged by the reviewer (merge commit
   eaecd0c), issue closed. Visual check needs a local run by the user.
 
+- Issue **#38** (NiceGUI): PR #51 reviewed (COMMENT, no findings; reviewer fix
+  d75dc15 dropped the default `port=8080`; server start + `curl` 200 and the four
+  unfiltered KPIs re-verified via Playwright), merged by the reviewer (merge
+  commit 44aa212), issue closed. Visual check needs a local run by the user.
+
 ## In progress
 
-- Issue **#38** (NiceGUI): PR #51 (`issue-38-nicegui` -> `agents/ui-prototypes`),
-  state: **review pending**. Verified in the cloud: server start + `curl` 200,
-  KPIs (a)/(b) read from the page via Playwright match `prepare_data.py`, empty
-  type selection shows the hint. Screenshots committed; visual check needs a
-  local run by the user.
+- Nothing. Next worker starts issue **#37** (Reflex).
 
 ## Next step
 
-- Reviewer: review and merge PR #51, close #38. After #38: #37 (Reflex).
+- Worker: implement #37 (Reflex). After #37: #42 (Quarto).
 - Findings for the user from #30 "Zu prüfen" (not implemented): year slider
   starts at 1992 (2 outliers, charts start 2010); 2026 is a partial year in the
   annual chart; KBA parquet still at report date 2024.04, source seems stale.
@@ -80,7 +81,8 @@ Update after every completed unit of work and before every handover.
   `issue-32-shared-data-prep` could not be deleted; the user can delete it.
   Same for `issue-30-streamlit-ui-fixes` (2026-10-10: "Write access to this
   GitHub API path is not permitted through this proxy.", HTTP 403).
-  Same for `issue-34-dash`, `issue-35-shiny` and `issue-39-solara` (git push
+  Same for `issue-34-dash`, `issue-35-shiny`, `issue-39-solara` and
+  `issue-38-nicegui` (git push
   --delete: "remote end hung up" / no effect).
 - Dash prototype: `AppShellHeader` has a fixed height; it is set per
   breakpoint (`{"base": 124, "sm": 88}`) so the wrapped title fits at 390 px.
@@ -118,7 +120,7 @@ Update after every completed unit of work and before every handover.
   (`":formatter"`). Without `grid.containLabel` and `legend.type = "scroll"` the
   stacked chart's legend overlaps the axis. `fuser -k 8080/tcp` stops the server.
 - CLAUDE.md forbids AI-attribution lines in commits and PRs; it overrides the
-  harness default footer.
+  harness default footer (also the `Co-Authored-By`/`Claude-Session` trailers).
 
 - `_shared/.sqlfluff` sets `max_line_length = 100`; black is run with `-l 100`.
   `prepare_data.py` is the shared data entry point, run it first in any session
