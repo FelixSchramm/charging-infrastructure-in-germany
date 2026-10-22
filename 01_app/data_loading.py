@@ -40,14 +40,55 @@ def _leistungskategorie(leistung):
         return KAT_NORMAL
 
 
+def _aggregate_to_ladepunkte(df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate connector rows to one row per charging point (EVSE).
+
+    The parquet stores one row per connector (`ladepunkt_id` formatted as
+    ``<evse_key>#<connector_type>``). Grouping by station and EVSE key ensures
+    that charging points with multiple connectors are only counted once, using
+    their maximum connector power and combined plug types.
+
+    :param df: Connector-level DataFrame read from the charging parquet.
+    :return: DataFrame with one row per charging point (EVSE).
+    """
+    evse_key = df["ladepunkt_id"].astype(str).str.split("#").str[0].str.strip()
+    df = df.assign(_evse_key=evse_key)
+    keys = ["ladestation_id", "_evse_key"]
+
+    base = df.drop_duplicates(subset=keys).copy()
+    base["LadeleistungInKW"] = (
+        df.groupby(keys, sort=False)["LadeleistungInKW"].max().to_numpy()
+    )
+
+    multi_mask = df.duplicated(subset=keys, keep=False)
+    if multi_mask.any():
+        combined_stecker = (
+            df.loc[multi_mask]
+            .groupby(keys, sort=False)["Steckertyp"]
+            .agg(lambda s: ", ".join(dict.fromkeys(s.dropna().astype(str))))
+        )
+        base_idx = base.set_index(keys).index
+        matched = base_idx.isin(combined_stecker.index)
+        base.loc[matched, "Steckertyp"] = combined_stecker.reindex(base_idx[matched]).to_numpy()
+
+    return base.drop(columns=["_evse_key"]).reset_index(drop=True)
+
+
 @st.cache_data(ttl=3600)
 def load_data():
-    """Lädt das Ladesäulenregister und ergänzt Jahr + Leistungskategorie."""
+    """Load the charging register, aggregate to charging points, and add derived columns.
+
+    :return: Prepared charging-point DataFrame, or ``None`` if the parquet is missing.
+    """
     try:
         df = pd.read_parquet(CHARGING_PARQUET)
         df["Inbetriebnahmedatum"] = pd.to_datetime(df["Inbetriebnahmedatum"], errors="coerce")
         df["Jahr"] = df["Inbetriebnahmedatum"].dt.year
-        df.dropna(subset=["Inbetriebnahmedatum", "Bundesland", "KreisKreisfreieStadt"], inplace=True)
+        df.dropna(
+            subset=["Inbetriebnahmedatum", "Bundesland", "KreisKreisfreieStadt"],
+            inplace=True,
+        )
+        df = _aggregate_to_ladepunkte(df)
         df["Leistungskategorie"] = df["LadeleistungInKW"].apply(_leistungskategorie)
         return df
     except FileNotFoundError:
