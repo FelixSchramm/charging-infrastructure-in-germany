@@ -284,7 +284,7 @@ def main() -> None:
 
     print("Baue Ziel-Schema (eine Zeile pro Connector)...")
     df = build_target(data)
-    print(f"  -> {len(df)} Ladepunkte aus {df['ladestation_id'].nunique()} Stationen")
+    print(f"  -> {len(df)} Stecker aus {df['ladestation_id'].nunique()} Stationen")
 
     # must stay ahead of save_output() below -- afterwards the last known-good
     # state is gone and validate() has nothing left to compare against
