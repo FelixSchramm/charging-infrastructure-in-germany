@@ -57,19 +57,23 @@ def _aggregate_to_ladepunkte(df: pd.DataFrame) -> pd.DataFrame:
 
     base = df.drop_duplicates(subset=keys).copy()
     base["LadeleistungInKW"] = (
-        df.groupby(keys, sort=False)["LadeleistungInKW"].max().to_numpy()
+        df.groupby(keys, sort=False, dropna=False)["LadeleistungInKW"]
+        .max()
+        .to_numpy()
     )
 
     multi_mask = df.duplicated(subset=keys, keep=False)
     if multi_mask.any():
         combined_stecker = (
             df.loc[multi_mask]
-            .groupby(keys, sort=False)["Steckertyp"]
+            .groupby(keys, sort=False, dropna=False)["Steckertyp"]
             .agg(lambda s: ", ".join(dict.fromkeys(s.dropna().astype(str))))
         )
         base_idx = base.set_index(keys).index
         matched = base_idx.isin(combined_stecker.index)
-        base.loc[matched, "Steckertyp"] = combined_stecker.reindex(base_idx[matched]).to_numpy()
+        base.loc[matched, "Steckertyp"] = combined_stecker.reindex(
+            base_idx[matched]
+        ).to_numpy()
 
     return base.drop(columns=["_evse_key"]).reset_index(drop=True)
 
@@ -84,10 +88,7 @@ def load_data():
         df = pd.read_parquet(CHARGING_PARQUET)
         df["Inbetriebnahmedatum"] = pd.to_datetime(df["Inbetriebnahmedatum"], errors="coerce")
         df["Jahr"] = df["Inbetriebnahmedatum"].dt.year
-        df.dropna(
-            subset=["Inbetriebnahmedatum", "Bundesland", "KreisKreisfreieStadt"],
-            inplace=True,
-        )
+        df.dropna(subset=["Inbetriebnahmedatum", "Bundesland", "KreisKreisfreieStadt"], inplace=True)
         df = _aggregate_to_ladepunkte(df)
         df["Leistungskategorie"] = df["LadeleistungInKW"].apply(_leistungskategorie)
         return df
