@@ -1,0 +1,18 @@
+appearance:
+  default: light
+  switcher: false
+
+theme:
+  colors:
+    primary:
+      light: "#00B092"
+      dark: "#00B092"
+    accent:
+      light: "#003247"
+      dark: "#D3D3D3"
+
+plugins:
+  components:
+    "@evidence-dev/core-components": {}
+  datasources:
+    "@evidence-dev/csv": {}
