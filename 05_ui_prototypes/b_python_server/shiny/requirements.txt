@@ -1,0 +1,5 @@
+shiny==1.8.0
+shinywidgets==0.8.1
+libsass
+pandas
+plotly

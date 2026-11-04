@@ -10,9 +10,9 @@ Dieses Dashboard bietet einen umfassenden Überblick über den **Bestand** der �
 
 - **Verhältnis von Ladepunkten zu E-Fahrzeugen:** Die Karte zeigt das Verhältnis der öffentlichen Ladepunkte zum gewichteten lokalen E-Fahrzeugbestand (BEV zählt einfach, PHEV halb). Der Fahrzeugbestand basiert auf KBA-Daten (Zulassungsbezirke, Stichtag laut Quelle). Absolute Bestandszahlen werden vom KBA nicht veröffentlicht und werden näherungsweise aus den veröffentlichten Prozentanteilen berechnet.
 
-- **Zuverlässigkeit und Nutzererfahrung:** Gezählt werden alle registrierten Ladepunkte, unabhängig von ihrem Betriebszustand. Die tatsächliche Ausfallrate aus Nutzersichtgit ist ein entscheidender Qualitätsfaktor, der hier unberücksichtigt bleibt. Diese Diskrepanz zur offiziellen "Uptime" entsteht z.B. durch Softwarefehler oder defekte QR-Codes.
+- **Zuverlässigkeit und Nutzererfahrung:** Gezählt werden alle registrierten Ladepunkte, unabhängig von ihrem Betriebszustand. Die tatsächliche Ausfallrate aus Nutzersicht ist ein entscheidender Qualitätsfaktor, der hier unberücksichtigt bleibt. Diese Diskrepanz zur offiziellen "Uptime" entsteht z.B. durch Softwarefehler oder defekte QR-Codes.
 
-- **Ökonomischer Kontext:** Faktoren wie der komplexe Tarifstrukturen, die durch über gewerbliche 8.000 Betreiber entstehen, Preismodelle und die allgemeine Wirtschaftlichkeit der Standorte werden nicht analysiert. Diese beeinflussen jedoch die Marktdynamik und den weiteren Ausbau maßgeblich.
+- **Ökonomischer Kontext:** Faktoren wie die komplexen Tarifstrukturen, die durch über 8.000 gewerbliche Betreiber entstehen, Preismodelle und die allgemeine Wirtschaftlichkeit der Standorte werden nicht analysiert. Diese beeinflussen jedoch die Marktdynamik und den weiteren Ausbau maßgeblich.
 """
 
 

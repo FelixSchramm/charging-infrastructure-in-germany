@@ -1,0 +1,20 @@
+/*-- scss:defaults --*/
+$primary: #00B092;
+$secondary: #003247;
+$body-bg: #F5F7F8;
+$card-bg: #FFFFFF;
+$navbar-bg: #003247;
+$valuebox-bg-primary: $primary;
+$valuebox-bg-secondary: $secondary;
+
+/*-- scss:rules --*/
+.stand {
+  font-size: 0.85rem;
+  color: $secondary;
+}
+
+// An empty type selection hides KPIs and charts (class set in index.qmd).
+.no-selection .kpis,
+.no-selection .charts {
+  display: none !important;
+}

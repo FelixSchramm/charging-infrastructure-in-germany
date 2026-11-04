@@ -1,0 +1,132 @@
+---
+title: "Ladeinfrastruktur in Deutschland"
+lang: de
+format:
+  dashboard:
+    theme: [cosmo, theme.scss]
+    nav-buttons: []
+---
+
+## {.sidebar}
+
+```{python}
+#| echo: false
+from pathlib import Path
+
+import pandas as pd
+
+# Quarto runs the kernel in the folder of this file, so this path is relative
+# to index.qmd and not to the directory the command was started from.
+data_dir = Path("../../_shared/data")
+ojs_define(
+    overview=pd.read_csv(data_dir / "overview.csv"),
+    meta=pd.read_csv(data_dir / "meta.csv", dtype=str).iloc[0].to_dict(),
+)
+```
+
+```{ojs}
+//| echo: false
+viewof state = Inputs.select(["Alle Bundesländer", ...states], {label: "Bundesland"})
+viewof types = Inputs.checkbox(categories, {label: "Leistungstyp", value: categories, format: (c) => c.label})
+```
+
+```{ojs}
+//| echo: false
+//| include: false
+rows = transpose(overview)
+categories = [
+  {key: "hpc", label: "HPC-Laden (>= 150 kW)", color: "#00B092"},
+  {key: "schnell", label: "Schnellladen (> 22 kW)", color: "#003247"},
+  {key: "normal", label: "Normalladen (<= 22 kW)", color: "#D3D3D3"}
+]
+states = [...new Set(rows.map((d) => d.bundesland))].sort((a, b) => a.localeCompare(b, "de"))
+
+// Calculation logic from 05_ui_prototypes/README.md.
+selected = types.map((c) => c.key)
+filtered = state === "Alle Bundesländer" ? rows : rows.filter((d) => d.bundesland === state)
+matching = filtered.filter((d) => selected.some((k) => d[`has_${k}`]))
+// Block form: a parenthesized object literal with several keys is silently
+// dropped by Quarto 1.10 dashboards.
+kpis = {
+  return {
+    stations: fmt(d3.sum(matching, (d) => d.stationen)),
+    points: fmt(d3.sum(filtered, (d) => d3.sum(selected, (k) => d[`lp_${k}`]))),
+    hpc: fmt(selected.includes("hpc") ? d3.sum(filtered, (d) => d.lp_hpc) : 0),
+    gw: `${fmt(d3.sum(matching, (d) => d.kw) / 1e6, 2)} GW`
+  }
+}
+additions = d3
+  .flatRollup(
+    filtered.filter((d) => d.jahr >= 2010).flatMap((d) => types.map((c) => ({...c, jahr: d.jahr, lp: d[`lp_${c.key}`]}))),
+    (v) => d3.sum(v, (d) => d.lp),
+    (d) => d.jahr,
+    (d) => d.label
+  )
+  .map(([jahr, label, lp]) => ({jahr, label, lp}))
+
+fmt = (x, digits = 0) => x.toLocaleString("de-DE", {minimumFractionDigits: digits, maximumFractionDigits: digits})
+
+hint = selected.length ? "" : "Bitte wähle mindestens einen Leistungstyp aus."
+
+// An empty selection hides KPIs and charts via CSS (see theme.scss).
+document.body.classList.toggle("no-selection", selected.length === 0)
+```
+
+## Column
+
+### Row {.stand height="8%"}
+
+Datenstand: BNetzA: ${meta.bnetza_stand} | KBA: ${meta.kba_stand} (Update: ${meta.update})
+
+**${hint}**
+
+### Row {.kpis height="22%"}
+
+::: {.valuebox color="primary" icon="ev-station"}
+Ladestationen
+
+${kpis.stations}
+:::
+
+::: {.valuebox color="secondary" icon="plug"}
+Ladepunkte
+
+${kpis.points}
+:::
+
+::: {.valuebox color="primary" icon="lightning-charge"}
+HPC-Ladepunkte
+
+${kpis.hpc}
+:::
+
+::: {.valuebox color="secondary" icon="speedometer2"}
+Gesamtleistung
+
+${kpis.gw}
+:::
+
+### Row {.charts height="70%"}
+
+```{ojs}
+//| title: Jährlicher Zubau von Ladepunkten (Gesamt)
+Plot.plot({
+  height: 420,
+  marginLeft: 60,
+  x: {label: null, tickFormat: (y) => (y % (width < 600 ? 4 : 2) ? "" : String(y))},
+  y: {label: "Ladepunkte", grid: true, tickFormat: (y) => fmt(y)},
+  marks: [Plot.barY(additions, Plot.groupX({y: "sum"}, {x: "jahr", y: "lp", fill: "#003247", tip: true}))]
+})
+```
+
+```{ojs}
+//| title: Jährlicher Zubau nach Leistungstyp
+Plot.plot({
+  height: 420,
+  marginLeft: 60,
+  x: {label: null, tickFormat: (y) => (y % (width < 600 ? 4 : 2) ? "" : String(y))},
+  y: {label: "Ladepunkte", grid: true, tickFormat: (y) => fmt(y)},
+  color: {domain: types.map((c) => c.label), range: types.map((c) => c.color), legend: true},
+  marks: [Plot.barY(additions, {x: "jahr", y: "lp", fill: "label", order: types.map((c) => c.label), tip: true})]
+})
+```
