@@ -1,0 +1,12 @@
+{
+  "name": "overview-observable",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "observable preview --port 3000",
+    "build": "observable build"
+  },
+  "dependencies": {
+    "@observablehq/framework": "1.13.4"
+  }
+}

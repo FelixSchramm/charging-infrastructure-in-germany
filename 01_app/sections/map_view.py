@@ -33,7 +33,10 @@ _TOOLTIP_STYLE = f"""
 def render_map(df: pd.DataFrame, gdf_districts, df_kba, f: Filters):
     """Zeichnet die Choropleth-Karte (gesamtdeutsch, alle Filter außer Bundesland)."""
     st.header("Regionale Analyse")
-    st.caption("Bestand öffentlicher Ladepunkte je Kreis (gesamtdeutsch).")
+    st.caption(
+        "Bestand öffentlicher Ladepunkte je Kreis (gesamtdeutsch). "
+        "Gewichteter EV-Bestand: BEV = 1, PHEV = 0,5."
+    )
 
     if gdf_districts is None:
         st.warning(
@@ -48,7 +51,7 @@ def render_map(df: pd.DataFrame, gdf_districts, df_kba, f: Filters):
 
     m = folium.Map(
         location=MAP_CENTER,
-        tiles="CartoDB positron",
+        tiles="OpenStreetMap",
         zoom_start=MAP_ZOOM,
         min_zoom=MAP_ZOOM,
         max_bounds=True,
@@ -84,8 +87,7 @@ def render_map(df: pd.DataFrame, gdf_districts, df_kba, f: Filters):
     st.info(
         "Der **Bundesland-Filter** wirkt auf dieser Karte nicht – sie zeigt immer "
         "ganz Deutschland. Die übrigen Filter (Zeitraum, Leistungstyp, Landkreis, "
-        "Betreiber) werden dagegen angewendet.",
-        icon="ℹ️",
+        "Betreiber) werden dagegen angewendet."
     )
 
 
@@ -154,7 +156,7 @@ def _choropleth_config(gdf_for_map: gpd.GeoDataFrame, use_ev_metric: bool):
     if use_ev_metric:
         valid_vals = gdf_for_map["lp_pro_ev"].dropna()
         true_max = float(valid_vals.max()) if len(valid_vals) > 0 else 0.2
-        bin_candidates = [0.01, 0.02, 0.05, 0.08, 0.12, 0.2, 0.35]
+        bin_candidates = [0.05, 0.1, 0.2, 0.35]
         bins = sorted(
             set(
                 [0.0]
@@ -171,7 +173,7 @@ def _choropleth_config(gdf_for_map: gpd.GeoDataFrame, use_ev_metric: bool):
             ]
         return (
             "lp_pro_ev",
-            "Ladepunkte je gewichtetem EV-Bestand (BEV=1, PHEV=0,5)",
+            "Ladepunkte je gew. EV-Bestand",
             bins,
         )
 

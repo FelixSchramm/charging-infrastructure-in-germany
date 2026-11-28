@@ -73,8 +73,9 @@ def render_sidebar(df: pd.DataFrame) -> Filters:
         st.session_state["flt_jahre"] = (min_jahr, max_jahr)
 
     presets = _zeitraum_presets(min_jahr, max_jahr)
-    for col, (label, spanne) in zip(st.sidebar.columns(len(presets)), presets):
-        if col.button(label, use_container_width=True):
+    # Untereinander statt in Spalten: in der schmalen Seitenleiste bricht sonst "Gesamt" um.
+    for label, spanne in presets:
+        if st.sidebar.button(label, use_container_width=True):
             st.session_state["flt_jahre"] = spanne
             st.rerun()
 
